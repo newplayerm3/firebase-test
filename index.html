@@ -17,6 +17,8 @@
     <script src="assets/js/ai-service.js"></script>
     <script src="assets/js/firebase-service.js"></script>
     <script src="firebase-init-fix.js"></script>
+    <script src="assets/js/firebase-login-integration.js"></script>
+    <script src="assets/js/firebase-online-mode.js"></script>
     <script src="assets/js/stripe-service.js"></script>
     <script src="assets/js/features.js"></script>
     <script src="assets/js/ui-interactions.js"></script>
@@ -2756,6 +2758,38 @@
             accent-color: #3b82f6;
         }
 
+        /* 登录界面记住我勾选框样式 */
+        .login-remember {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            user-select: none;
+            margin-top: 10px;
+        }
+
+        .remember-checkbox {
+            width: 18px;
+            height: 18px;
+            accent-color: #2563eb;
+            cursor: pointer;
+        }
+
+        .remember-text {
+            color: #1e40af;  /* 蓝色文字，高对比度 */
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .login-remember:hover .remember-text {
+            color: #1d4ed8;  /* 悬停时更深的蓝色 */
+        }
+
+        .remember-checkbox:checked + .remember-text {
+            color: #1e40af;
+            font-weight: 700;
+        }
+
         #chatLanguage {
             padding: 6px 12px;
             border: 1px solid #d1d5db;
@@ -4005,6 +4039,13 @@
                     <input type="password" class="form-input" id="loginPassword" placeholder="请输入密码" required>
                 </div>
                 
+                <div class="form-group">
+                    <label class="login-remember">
+                        <input type="checkbox" id="rememberMe" class="remember-checkbox">
+                        <span class="remember-text">记住我</span>
+                    </label>
+                </div>
+                
                 <div class="login-options">
                     <button type="submit" class="btn btn-primary" style="width: 100%;">
                         🔐 登录
@@ -5100,6 +5141,9 @@
             // Show login interface by default
             showLogin();
             
+            // 加载记住的登录信息
+            setTimeout(loadRememberedEmail, 100);
+            
             // Initialize search functionality
             initSearch();
             
@@ -5161,12 +5205,8 @@
                 console.log('⚠️ Firebase is disabled in configuration');
                 showNotificationMessage('Firebase服务未启用，将使用本地存储模式', 'warning');
                 
-                // Don't immediately enable offline mode, give Firebase a chance
-                setTimeout(() => {
-                    if (!window.firebaseService || !window.firebaseService.isInitialized) {
-                        enableOfflineMode();
-                    }
-                }, 5000); // Wait 5 seconds before disabling Google login
+                // 保持Firebase在线模式，不自动切换到离线
+                console.log('🔥 保持Firebase在线模式，等待服务初始化...');
             }
             
             // Add fallback Firebase initialization after a delay
@@ -5222,6 +5262,19 @@
             document.getElementById('registerToggle').classList.remove('active');
             document.getElementById('loginForm').style.display = 'block';
             document.getElementById('registerForm').style.display = 'none';
+            
+            // 加载记住的邮箱
+            loadRememberedEmail();
+        }
+
+        // 加载记住的邮箱
+        function loadRememberedEmail() {
+            const rememberedEmail = localStorage.getItem('rememberedEmail');
+            if (rememberedEmail) {
+                document.getElementById('loginEmail').value = rememberedEmail;
+                document.getElementById('rememberMe').checked = true;
+                console.log('📧 已加载记住的邮箱');
+            }
         }
 
         function showRegisterForm() {
@@ -5236,6 +5289,7 @@
             e.preventDefault();
             const email = document.getElementById('loginEmail').value;
             const password = document.getElementById('loginPassword').value;
+            const rememberMe = document.getElementById('rememberMe').checked;
             
             if (!email || !password) {
                 showNotificationMessage('请填写邮箱和密码', 'error');
@@ -5251,6 +5305,14 @@
                     // Fallback to local authentication
                     console.log('🔄 Using local authentication fallback');
                     await localSignIn(email, password);
+                }
+
+                // 处理记住我功能
+                if (rememberMe) {
+                    localStorage.setItem('rememberedEmail', email);
+                    console.log('📝 已保存登录邮箱');
+                } else {
+                    localStorage.removeItem('rememberedEmail');
                 }
                 
             } catch (error) {
@@ -5518,8 +5580,8 @@
                 }
             });
             
-            // Show offline notice
-            showNotificationMessage('当前为离线模式，Google登录功能暂时不可用', 'warning');
+            // 不显示离线模式消息，保持在线状态
+            console.log('🔥 保持Firebase在线模式，Google登录功能等待连接中...');
         }
 
         // Local authentication functions (fallback)
@@ -5631,11 +5693,10 @@
                     showNotificationMessage('Firebase服务已恢复', 'success');
                 } catch (error) {
                     console.error('Fallback initialization failed:', error);
-                    enableOfflineMode();
+                    console.log('🔥 保持在线模式，继续尝试Firebase连接...');
                 }
             } else {
-                console.log('📱 Firebase still not available, staying in offline mode');
-                enableOfflineMode();
+                console.log('🔥 Firebase暂时不可用，但保持在线模式等待连接...');
             }
         }
 

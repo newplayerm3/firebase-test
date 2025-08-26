@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Firebase 连接测试</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .status {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-weight: 500;
+        }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .warning { background: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
+        .info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            background: #f8f9fa;
+        }
+        .test-button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .test-button:hover { background: #0056b3; }
+        .test-button:disabled { background: #6c757d; cursor: not-allowed; }
+        pre {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            font-size: 14px;
+        }
+        .config-display {
+            background: #e9ecef;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔥 Firebase 连接测试</h1>
+            <p>智能升学助手 - Firebase 服务连接验证</p>
+        </div>
+
+        <div class="test-section">
+            <h3>📋 当前Firebase配置</h3>
+            <div class="config-display" id="configDisplay">
+                正在加载配置...
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>🔗 连接状态测试</h3>
+            <div id="connectionStatus">
+                <div class="status info">准备开始连接测试...</div>
+            </div>
+            <button class="test-button" onclick="testFirebaseConnection()">开始连接测试</button>
+        </div>
+
+        <div class="test-section">
+            <h3>🔐 认证服务测试</h3>
+            <div id="authStatus">
+                <div class="status info">等待认证测试...</div>
+            </div>
+            <button class="test-button" onclick="testAuthentication()">测试认证服务</button>
+            <button class="test-button" onclick="testGoogleAuth()">测试Google登录</button>
+            <button class="test-button" onclick="testAnonymousAuth()">测试匿名登录</button>
+        </div>
+
+        <div class="test-section">
+            <h3>💾 数据库服务测试</h3>
+            <div id="firestoreStatus">
+                <div class="status info">等待数据库测试...</div>
+            </div>
+            <button class="test-button" onclick="testFirestore()">测试Firestore</button>
+            <button class="test-button" onclick="testStorageService()">测试Storage</button>
+        </div>
+
+        <div class="test-section">
+            <h3>📊 测试结果汇总</h3>
+            <div id="testResults">
+                <div class="status info">测试尚未开始</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics-compat.js"></script>
+
+    <script>
+        // Firebase配置
+        const firebaseConfig = {
+            apiKey: "AIzaSyAPjCKi9CWvivVVxANhugEz6AY3lpRBVec",
+            authDomain: "smart-college-cf2b1.firebaseapp.com",
+            projectId: "smart-college-cf2b1",
+            storageBucket: "smart-college-cf2b1.firebasestorage.app",
+            messagingSenderId: "445324851190",
+            appId: "1:445324851190:web:35ab87f493ec126265f9d7",
+            measurementId: "G-B5E2CB2L66"
+        };
+
+        let app;
+        let auth;
+        let db;
+        let storage;
+        let testResults = {};
+
+        // 显示配置信息
+        function displayConfig() {
+            const configDiv = document.getElementById('configDisplay');
+            configDiv.innerHTML = `
+                <strong>项目配置:</strong><br>
+                • 项目ID: ${firebaseConfig.projectId}<br>
+                • 认证域名: ${firebaseConfig.authDomain}<br>
+                • 存储桶: ${firebaseConfig.storageBucket}<br>
+                • 应用ID: ${firebaseConfig.appId}<br>
+                • 测量ID: ${firebaseConfig.measurementId}
+            `;
+        }
+
+        // 更新状态显示
+        function updateStatus(elementId, message, type) {
+            const element = document.getElementById(elementId);
+            element.innerHTML = `<div class="status ${type}">${message}</div>`;
+        }
+
+        // 测试Firebase连接
+        async function testFirebaseConnection() {
+            updateStatus('connectionStatus', '🔄 正在测试Firebase连接...', 'info');
+            
+            try {
+                // 检查Firebase SDK是否加载
+                if (typeof firebase === 'undefined') {
+                    throw new Error('Firebase SDK未加载');
+                }
+
+                // 初始化Firebase
+                if (firebase.apps.length === 0) {
+                    app = firebase.initializeApp(firebaseConfig);
+                } else {
+                    app = firebase.app();
+                }
+
+                // 初始化服务
+                auth = firebase.auth();
+                db = firebase.firestore();
+                storage = firebase.storage();
+
+                updateStatus('connectionStatus', '✅ Firebase连接成功！所有服务已初始化', 'success');
+                testResults.connection = 'success';
+                updateTestSummary();
+
+            } catch (error) {
+                console.error('Firebase连接失败:', error);
+                updateStatus('connectionStatus', `❌ Firebase连接失败: ${error.message}`, 'error');
+                testResults.connection = 'failed';
+                updateTestSummary();
+            }
+        }
+
+        // 测试认证服务
+        async function testAuthentication() {
+            if (!auth) {
+                updateStatus('authStatus', '❌ 请先测试Firebase连接', 'error');
+                return;
+            }
+
+            updateStatus('authStatus', '🔄 正在测试认证服务...', 'info');
+
+            try {
+                // 监听认证状态变化
+                const unsubscribe = auth.onAuthStateChanged((user) => {
+                    if (user) {
+                        updateStatus('authStatus', `✅ 认证服务正常，当前用户: ${user.email || '匿名用户'}`, 'success');
+                    } else {
+                        updateStatus('authStatus', '✅ 认证服务正常，当前未登录', 'success');
+                    }
+                    testResults.auth = 'success';
+                    updateTestSummary();
+                    unsubscribe();
+                });
+
+                // 测试超时
+                setTimeout(() => {
+                    unsubscribe();
+                    if (!testResults.auth) {
+                        updateStatus('authStatus', '⚠️ 认证服务响应超时', 'warning');
+                        testResults.auth = 'timeout';
+                        updateTestSummary();
+                    }
+                }, 5000);
+
+            } catch (error) {
+                console.error('认证测试失败:', error);
+                updateStatus('authStatus', `❌ 认证测试失败: ${error.message}`, 'error');
+                testResults.auth = 'failed';
+                updateTestSummary();
+            }
+        }
+
+        // 测试Google登录
+        async function testGoogleAuth() {
+            if (!auth) {
+                alert('请先测试Firebase连接');
+                return;
+            }
+
+            try {
+                const provider = new firebase.auth.GoogleAuthProvider();
+                provider.addScope('email');
+                provider.addScope('profile');
+
+                updateStatus('authStatus', '🔄 正在尝试Google登录...', 'info');
+                const result = await auth.signInWithPopup(provider);
+                
+                updateStatus('authStatus', `✅ Google登录成功！用户: ${result.user.email}`, 'success');
+                testResults.googleAuth = 'success';
+                updateTestSummary();
+
+            } catch (error) {
+                console.error('Google登录失败:', error);
+                let errorMessage = 'Google登录失败';
+                
+                if (error.code === 'auth/popup-closed-by-user') {
+                    errorMessage = 'Google登录弹窗被用户关闭';
+                } else if (error.code === 'auth/popup-blocked') {
+                    errorMessage = 'Google登录弹窗被浏览器阻止';
+                }
+                
+                updateStatus('authStatus', `❌ ${errorMessage}: ${error.message}`, 'error');
+                testResults.googleAuth = 'failed';
+                updateTestSummary();
+            }
+        }
+
+        // 测试匿名登录
+        async function testAnonymousAuth() {
+            if (!auth) {
+                alert('请先测试Firebase连接');
+                return;
+            }
+
+            try {
+                updateStatus('authStatus', '🔄 正在尝试匿名登录...', 'info');
+                const result = await auth.signInAnonymously();
+                
+                updateStatus('authStatus', `✅ 匿名登录成功！用户ID: ${result.user.uid}`, 'success');
+                testResults.anonymousAuth = 'success';
+                updateTestSummary();
+
+            } catch (error) {
+                console.error('匿名登录失败:', error);
+                updateStatus('authStatus', `❌ 匿名登录失败: ${error.message}`, 'error');
+                testResults.anonymousAuth = 'failed';
+                updateTestSummary();
+            }
+        }
+
+        // 测试Firestore
+        async function testFirestore() {
+            if (!db) {
+                updateStatus('firestoreStatus', '❌ 请先测试Firebase连接', 'error');
+                return;
+            }
+
+            updateStatus('firestoreStatus', '🔄 正在测试Firestore数据库...', 'info');
+
+            try {
+                // 尝试写入测试数据
+                const testCollection = db.collection('test');
+                const testDoc = {
+                    message: 'Firebase连接测试',
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                    testId: Math.random().toString(36).substr(2, 9)
+                };
+
+                await testCollection.add(testDoc);
+                
+                // 尝试读取数据
+                const snapshot = await testCollection.limit(1).get();
+                
+                updateStatus('firestoreStatus', '✅ Firestore测试成功！数据读写正常', 'success');
+                testResults.firestore = 'success';
+                updateTestSummary();
+
+            } catch (error) {
+                console.error('Firestore测试失败:', error);
+                updateStatus('firestoreStatus', `❌ Firestore测试失败: ${error.message}`, 'error');
+                testResults.firestore = 'failed';
+                updateTestSummary();
+            }
+        }
+
+        // 测试Storage服务
+        async function testStorageService() {
+            if (!storage) {
+                updateStatus('firestoreStatus', '❌ 请先测试Firebase连接', 'error');
+                return;
+            }
+
+            updateStatus('firestoreStatus', '🔄 正在测试Storage存储服务...', 'info');
+
+            try {
+                // 创建一个测试文件引用
+                const storageRef = storage.ref();
+                const testRef = storageRef.child('test/connection-test.txt');
+                
+                // 尝试上传测试数据
+                const testData = 'Firebase Storage连接测试 - ' + new Date().toISOString();
+                await testRef.putString(testData);
+                
+                // 尝试获取下载URL
+                const downloadURL = await testRef.getDownloadURL();
+                
+                updateStatus('firestoreStatus', '✅ Storage测试成功！文件上传和访问正常', 'success');
+                testResults.storage = 'success';
+                updateTestSummary();
+
+            } catch (error) {
+                console.error('Storage测试失败:', error);
+                updateStatus('firestoreStatus', `❌ Storage测试失败: ${error.message}`, 'error');
+                testResults.storage = 'failed';
+                updateTestSummary();
+            }
+        }
+
+        // 更新测试结果汇总
+        function updateTestSummary() {
+            const results = Object.entries(testResults);
+            const successCount = results.filter(([key, value]) => value === 'success').length;
+            const totalTests = results.length;
+            
+            let summaryHTML = `<strong>测试进度: ${successCount}/${totalTests}</strong><br><br>`;
+            
+            const statusMap = {
+                'success': { icon: '✅', class: 'success', text: '成功' },
+                'failed': { icon: '❌', class: 'error', text: '失败' },
+                'timeout': { icon: '⚠️', class: 'warning', text: '超时' }
+            };
+            
+            const testNames = {
+                'connection': 'Firebase连接',
+                'auth': '认证服务',
+                'googleAuth': 'Google登录',
+                'anonymousAuth': '匿名登录',
+                'firestore': 'Firestore数据库',
+                'storage': 'Storage存储'
+            };
+            
+            results.forEach(([key, value]) => {
+                const status = statusMap[value] || { icon: '❓', class: 'info', text: '未知' };
+                summaryHTML += `${status.icon} ${testNames[key] || key}: ${status.text}<br>`;
+            });
+            
+            if (totalTests === 0) {
+                summaryHTML = '<div class="status info">测试尚未开始</div>';
+            } else if (successCount === totalTests) {
+                summaryHTML += '<br><div class="status success">🎉 所有测试通过！Firebase服务连接正常</div>';
+            } else {
+                summaryHTML += '<br><div class="status warning">⚠️ 部分测试未通过，请检查配置</div>';
+            }
+            
+            document.getElementById('testResults').innerHTML = summaryHTML;
+        }
+
+        // 页面加载时显示配置
+        window.addEventListener('load', () => {
+            displayConfig();
+            console.log('🔥 Firebase连接测试页面已加载');
+            console.log('配置信息:', firebaseConfig);
+        });
+
+        // 自动开始连接测试
+        setTimeout(() => {
+            testFirebaseConnection();
+        }, 1000);
+    </script>
+</body>
+</html>

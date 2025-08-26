@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Firebase认证诊断工具</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+        }
+        .container {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        .diagnostic-section {
+            margin: 20px 0;
+            padding: 20px;
+            border-radius: 10px;
+            background: #f8f9fa;
+        }
+        .test-item {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 5px;
+            background: white;
+        }
+        .status {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            margin-right: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+        }
+        .success { background: #28a745; }
+        .error { background: #dc3545; }
+        .warning { background: #ffc107; color: #333; }
+        .pending { background: #6c757d; }
+        .test-details {
+            flex: 1;
+        }
+        .test-name {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        .test-message {
+            font-size: 14px;
+            color: #666;
+        }
+        .action-buttons {
+            margin: 20px 0;
+            text-align: center;
+        }
+        .btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+        .btn:hover {
+            background: #0056b3;
+            transform: translateY(-2px);
+        }
+        .btn.secondary {
+            background: #6c757d;
+        }
+        .btn.success {
+            background: #28a745;
+        }
+        .btn.danger {
+            background: #dc3545;
+        }
+        .config-display {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            margin: 15px 0;
+        }
+        .solution-box {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e9ecef;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 15px 0;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #28a745, #20c997);
+            transition: width 0.5s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔥 Firebase认证诊断工具</h1>
+            <p>检测和修复Firebase认证配置问题</p>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressBar" style="width: 0%"></div>
+            </div>
+        </div>
+
+        <div class="diagnostic-section">
+            <h3>📋 基础连接测试</h3>
+            <div id="basicTests"></div>
+        </div>
+
+        <div class="diagnostic-section">
+            <h3>🔐 认证服务测试</h3>
+            <div id="authTests"></div>
+        </div>
+
+        <div class="diagnostic-section">
+            <h3>⚙️ 配置信息</h3>
+            <div id="configInfo"></div>
+        </div>
+
+        <div class="diagnostic-section">
+            <h3>🔧 解决方案</h3>
+            <div id="solutions"></div>
+        </div>
+
+        <div class="action-buttons">
+            <button class="btn" onclick="runDiagnostic()">🔍 重新诊断</button>
+            <button class="btn secondary" onclick="openFirebaseConsole()">🌐 打开Firebase控制台</button>
+            <button class="btn success" onclick="testMainSite()">🏠 测试主网站</button>
+            <button class="btn danger" onclick="exportReport()">📊 导出报告</button>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics.js"></script>
+
+    <!-- 配置文件 -->
+    <script src="config.js"></script>
+
+    <script>
+        let diagnosticResults = {
+            basic: {},
+            auth: {},
+            config: {},
+            solutions: []
+        };
+
+        let testProgress = 0;
+        const totalTests = 8;
+
+        function updateProgress(completed) {
+            testProgress = completed;
+            const percentage = (completed / totalTests) * 100;
+            document.getElementById('progressBar').style.width = percentage + '%';
+        }
+
+        function addTestResult(container, testName, status, message, details = '') {
+            const testItem = document.createElement('div');
+            testItem.className = 'test-item';
+            
+            const statusIcon = status === 'success' ? '✅' : 
+                              status === 'error' ? '❌' : 
+                              status === 'warning' ? '⚠️' : '⏳';
+            
+            testItem.innerHTML = `
+                <div class="status ${status}">${statusIcon}</div>
+                <div class="test-details">
+                    <div class="test-name">${testName}</div>
+                    <div class="test-message">${message}</div>
+                    ${details ? `<div class="config-display">${details}</div>` : ''}
+                </div>
+            `;
+            
+            document.getElementById(container).appendChild(testItem);
+        }
+
+        function addSolution(title, content, type = 'info') {
+            const solution = document.createElement('div');
+            solution.className = 'solution-box';
+            solution.innerHTML = `
+                <h4>${title}</h4>
+                <p>${content}</p>
+            `;
+            document.getElementById('solutions').appendChild(solution);
+        }
+
+        async function runDiagnostic() {
+            // 清空之前的结果
+            document.getElementById('basicTests').innerHTML = '';
+            document.getElementById('authTests').innerHTML = '';
+            document.getElementById('configInfo').innerHTML = '';
+            document.getElementById('solutions').innerHTML = '';
+            
+            updateProgress(0);
+            
+            console.log('🔍 开始Firebase认证诊断...');
+
+            // 1. 检查Firebase SDK加载
+            try {
+                if (typeof firebase !== 'undefined') {
+                    addTestResult('basicTests', 'Firebase SDK加载', 'success', 'Firebase SDK已成功加载');
+                    diagnosticResults.basic.sdkLoaded = true;
+                } else {
+                    addTestResult('basicTests', 'Firebase SDK加载', 'error', 'Firebase SDK未加载');
+                    diagnosticResults.basic.sdkLoaded = false;
+                }
+                updateProgress(1);
+            } catch (error) {
+                addTestResult('basicTests', 'Firebase SDK加载', 'error', `SDK加载错误: ${error.message}`);
+                diagnosticResults.basic.sdkLoaded = false;
+            }
+
+            // 2. 检查配置文件
+            try {
+                if (window.CONFIG && window.CONFIG.firebase && window.CONFIG.firebase.config) {
+                    const config = window.CONFIG.firebase.config;
+                    addTestResult('basicTests', '配置文件检查', 'success', '配置文件加载成功');
+                    addTestResult('configInfo', '项目配置', 'success', 
+                        `项目ID: ${config.projectId}`, 
+                        JSON.stringify(config, null, 2)
+                    );
+                    diagnosticResults.config = config;
+                } else {
+                    addTestResult('basicTests', '配置文件检查', 'error', '配置文件缺失或格式错误');
+                }
+                updateProgress(2);
+            } catch (error) {
+                addTestResult('basicTests', '配置文件检查', 'error', `配置错误: ${error.message}`);
+            }
+
+            // 3. Firebase初始化
+            try {
+                if (!firebase.apps.length) {
+                    firebase.initializeApp(window.CONFIG.firebase.config);
+                }
+                addTestResult('basicTests', 'Firebase初始化', 'success', 'Firebase应用初始化成功');
+                diagnosticResults.basic.initialized = true;
+                updateProgress(3);
+            } catch (error) {
+                addTestResult('basicTests', 'Firebase初始化', 'error', `初始化失败: ${error.message}`);
+                diagnosticResults.basic.initialized = false;
+            }
+
+            // 4. 认证服务检查
+            try {
+                const auth = firebase.auth();
+                addTestResult('authTests', '认证服务', 'success', '认证服务可用');
+                diagnosticResults.auth.serviceAvailable = true;
+                updateProgress(4);
+            } catch (error) {
+                addTestResult('authTests', '认证服务', 'error', `认证服务错误: ${error.message}`);
+                diagnosticResults.auth.serviceAvailable = false;
+            }
+
+            // 5. Google登录提供商测试
+            try {
+                const provider = new firebase.auth.GoogleAuthProvider();
+                addTestResult('authTests', 'Google登录提供商', 'success', 'Google认证提供商创建成功');
+                
+                // 尝试获取重定向结果（不会触发实际登录）
+                firebase.auth().getRedirectResult().then(() => {
+                    addTestResult('authTests', 'Google登录配置', 'success', 'Google登录配置正常');
+                    diagnosticResults.auth.googleEnabled = true;
+                }).catch((error) => {
+                    if (error.code === 'auth/configuration-not-found') {
+                        addTestResult('authTests', 'Google登录配置', 'error', 
+                            'Google登录未在Firebase控制台中启用',
+                            `错误代码: ${error.code}\n错误信息: ${error.message}`
+                        );
+                        addSolution('启用Google登录', 
+                            '请访问Firebase控制台 > Authentication > Sign-in method，启用Google提供商并配置项目支持邮箱。'
+                        );
+                    } else {
+                        addTestResult('authTests', 'Google登录配置', 'warning', 
+                            `Google登录配置警告: ${error.message}`,
+                            `错误代码: ${error.code}`
+                        );
+                    }
+                    diagnosticResults.auth.googleEnabled = false;
+                });
+                updateProgress(5);
+            } catch (error) {
+                addTestResult('authTests', 'Google登录提供商', 'error', `Google提供商错误: ${error.message}`);
+                diagnosticResults.auth.googleEnabled = false;
+            }
+
+            // 6. 匿名登录测试
+            try {
+                // 尝试匿名登录（不会实际登录，只检查配置）
+                firebase.auth().signInAnonymously().then(() => {
+                    addTestResult('authTests', '匿名登录', 'success', '匿名登录功能正常');
+                    diagnosticResults.auth.anonymousEnabled = true;
+                    // 立即退出匿名用户
+                    firebase.auth().signOut();
+                }).catch((error) => {
+                    if (error.code === 'auth/operation-not-allowed') {
+                        addTestResult('authTests', '匿名登录', 'error', 
+                            '匿名登录未在Firebase控制台中启用',
+                            `错误代码: ${error.code}\n错误信息: ${error.message}`
+                        );
+                        addSolution('启用匿名登录', 
+                            '请访问Firebase控制台 > Authentication > Sign-in method，启用匿名提供商。'
+                        );
+                    } else {
+                        addTestResult('authTests', '匿名登录', 'error', 
+                            `匿名登录错误: ${error.message}`,
+                            `错误代码: ${error.code}`
+                        );
+                    }
+                    diagnosticResults.auth.anonymousEnabled = false;
+                });
+                updateProgress(6);
+            } catch (error) {
+                addTestResult('authTests', '匿名登录', 'error', `匿名登录配置错误: ${error.message}`);
+                diagnosticResults.auth.anonymousEnabled = false;
+            }
+
+            // 7. Firestore连接测试
+            try {
+                const db = firebase.firestore();
+                addTestResult('basicTests', 'Firestore数据库', 'success', 'Firestore数据库连接成功');
+                diagnosticResults.basic.firestoreAvailable = true;
+                updateProgress(7);
+            } catch (error) {
+                addTestResult('basicTests', 'Firestore数据库', 'error', `Firestore错误: ${error.message}`);
+                diagnosticResults.basic.firestoreAvailable = false;
+            }
+
+            // 8. 域名授权检查
+            try {
+                const currentDomain = window.location.hostname;
+                addTestResult('configInfo', '当前域名', 'success', 
+                    `当前访问域名: ${currentDomain}`,
+                    `如果认证失败，请确保此域名已添加到Firebase控制台的授权域名列表中`
+                );
+                
+                if (currentDomain === 'localhost' || currentDomain === '127.0.0.1') {
+                    addSolution('本地开发环境', 
+                        '您正在本地环境中测试。请确保在Firebase控制台的授权域名中添加了 localhost 和 127.0.0.1。'
+                    );
+                }
+                updateProgress(8);
+            } catch (error) {
+                addTestResult('configInfo', '域名检查', 'error', `域名检查错误: ${error.message}`);
+            }
+
+            // 生成通用解决方案
+            addSolution('检查Firebase控制台设置', 
+                '1. 访问 Firebase控制台 > Authentication > Sign-in method<br>' +
+                '2. 确保Google和匿名登录都已启用<br>' +
+                '3. 在Settings > Authorized domains中添加您的域名'
+            );
+
+            addSolution('检查OAuth配置', 
+                '访问 Google Cloud Console > APIs & Services > Credentials，确保OAuth 2.0客户端ID配置正确。'
+            );
+
+            console.log('✅ 诊断完成', diagnosticResults);
+        }
+
+        function openFirebaseConsole() {
+            const projectId = window.CONFIG?.firebase?.config?.projectId || 'smart-college-cf2b1';
+            window.open(`https://console.firebase.google.com/project/${projectId}/authentication/users`, '_blank');
+        }
+
+        function testMainSite() {
+            window.open('index.html', '_blank');
+        }
+
+        function exportReport() {
+            const report = {
+                timestamp: new Date().toISOString(),
+                results: diagnosticResults,
+                recommendations: [
+                    '在Firebase控制台启用Google和匿名登录',
+                    '添加正确的授权域名',
+                    '检查OAuth 2.0配置',
+                    '验证API密钥权限'
+                ]
+            };
+            
+            const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `firebase-diagnostic-report-${Date.now()}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // 页面加载时自动运行诊断
+        window.addEventListener('load', () => {
+            setTimeout(runDiagnostic, 1000);
+        });
+    </script>
+</body>
+</html>
