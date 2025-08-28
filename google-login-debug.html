@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google登录诊断工具</title>
+    <style>
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: #1e40af;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border-radius: 12px;
+            border-left: 4px solid #3b82f6;
+            background: #f8fafc;
+        }
+        
+        .btn {
+            background: #3b82f6;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn:hover {
+            background: #2563eb;
+            transform: translateY(-2px);
+        }
+        
+        .btn-google {
+            background: #dc2626;
+        }
+        
+        .btn-google:hover {
+            background: #b91c1c;
+        }
+        
+        .result {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            white-space: pre-wrap;
+        }
+        
+        .success {
+            background: #d1fae5;
+            color: #065f46;
+            border-left: 4px solid #10b981;
+        }
+        
+        .error {
+            background: #fee2e2;
+            color: #991b1b;
+            border-left: 4px solid #ef4444;
+        }
+        
+        .warning {
+            background: #fef3c7;
+            color: #92400e;
+            border-left: 4px solid #f59e0b;
+        }
+        
+        .info {
+            background: #dbeafe;
+            color: #1e40af;
+            border-left: 4px solid #3b82f6;
+        }
+        
+        .code {
+            background: #1f2937;
+            color: #e5e7eb;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Google登录诊断工具</h1>
+        
+        <div class="test-section">
+            <h3>📋 常见问题检查</h3>
+            <button class="btn" onclick="checkCommonIssues()">检查常见问题</button>
+            <div id="commonIssuesResult" class="result" style="display: none;"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>🔧 Firebase配置检查</h3>
+            <button class="btn" onclick="checkFirebaseConfig()">检查Firebase配置</button>
+            <div id="firebaseConfigResult" class="result" style="display: none;"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>🌐 网络连接测试</h3>
+            <button class="btn" onclick="testNetworkConnections()">测试网络连接</button>
+            <div id="networkResult" class="result" style="display: none;"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>🔑 Google登录测试</h3>
+            <button class="btn btn-google" onclick="testGoogleLogin()">测试Google登录</button>
+            <div id="googleLoginResult" class="result" style="display: none;"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>💊 一键修复</h3>
+            <button class="btn" onclick="quickFix()">尝试自动修复</button>
+            <div id="quickFixResult" class="result" style="display: none;"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>📖 解决方案</h3>
+            <div class="info">
+                <strong>如果Google登录仍然失败，请尝试以下解决方案：</strong><br><br>
+                
+                <strong>1. 浏览器设置:</strong><br>
+                • 允许弹窗（重要！）<br>
+                • 清除浏览器缓存和Cookie<br>
+                • 禁用广告拦截器<br>
+                • 尝试无痕模式<br><br>
+                
+                <strong>2. 网络环境:</strong><br>
+                • 确保可以访问Google服务<br>
+                • 检查防火墙设置<br>
+                • 尝试使用不同的网络<br><br>
+                
+                <strong>3. 账户相关:</strong><br>
+                • 确保Google账户正常<br>
+                • 尝试使用不同的Google账户<br>
+                • 检查是否在其他设备上可以登录<br><br>
+                
+                <strong>4. 开发者配置:</strong><br>
+                • Firebase Console中启用Google登录<br>
+                • 添加授权域名<br>
+                • 检查API密钥权限
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    
+    <!-- 配置文件 -->
+    <script src="config.js"></script>
+    
+    <script>
+        let firebaseInitialized = false;
+        
+        // 初始化Firebase
+        async function initFirebase() {
+            try {
+                if (!window.CONFIG?.firebase?.config) {
+                    throw new Error('Firebase配置未找到');
+                }
+                
+                if (!firebase.apps.length) {
+                    firebase.initializeApp(window.CONFIG.firebase.config);
+                    console.log('✅ Firebase initialized');
+                }
+                
+                firebaseInitialized = true;
+                return true;
+            } catch (error) {
+                console.error('❌ Firebase initialization failed:', error);
+                return false;
+            }
+        }
+        
+        function showResult(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            element.style.display = 'block';
+            element.className = `result ${type}`;
+            element.textContent = message;
+        }
+        
+        async function checkCommonIssues() {
+            showResult('commonIssuesResult', '正在检查常见问题...', 'info');
+            
+            let issues = [];
+            let warnings = [];
+            
+            // 检查是否在localhost
+            if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
+                warnings.push('✅ 运行在本地环境 (localhost)');
+            } else {
+                issues.push('⚠️ 不在localhost环境，可能需要配置授权域名');
+            }
+            
+            // 检查HTTPS
+            if (location.protocol === 'https:' || location.hostname === 'localhost') {
+                warnings.push('✅ 使用安全连接');
+            } else {
+                issues.push('❌ 需要HTTPS连接（生产环境）');
+            }
+            
+            // 检查弹窗拦截
+            try {
+                const popup = window.open('', '_blank', 'width=1,height=1');
+                if (popup) {
+                    popup.close();
+                    warnings.push('✅ 弹窗功能正常');
+                } else {
+                    issues.push('❌ 弹窗被拦截，请允许此网站的弹窗');
+                }
+            } catch (e) {
+                issues.push('❌ 弹窗测试失败：' + e.message);
+            }
+            
+            // 检查网络连接
+            if (navigator.onLine) {
+                warnings.push('✅ 网络连接正常');
+            } else {
+                issues.push('❌ 网络连接断开');
+            }
+            
+            const result = [
+                '=== 常见问题检查结果 ===',
+                '',
+                '正常项目:',
+                ...warnings,
+                '',
+                '需要注意的问题:',
+                ...issues,
+                '',
+                issues.length === 0 ? '🎉 没有发现明显问题！' : '⚠️ 发现 ' + issues.length + ' 个问题需要处理'
+            ].join('\n');
+            
+            showResult('commonIssuesResult', result, issues.length === 0 ? 'success' : 'warning');
+        }
+        
+        async function checkFirebaseConfig() {
+            showResult('firebaseConfigResult', '正在检查Firebase配置...', 'info');
+            
+            try {
+                const config = window.CONFIG?.firebase?.config;
+                if (!config) {
+                    throw new Error('Firebase配置未找到');
+                }
+                
+                const requiredFields = ['apiKey', 'authDomain', 'projectId'];
+                const missingFields = requiredFields.filter(field => !config[field]);
+                
+                let result = '=== Firebase配置检查 ===\n\n';
+                
+                if (missingFields.length > 0) {
+                    result += '❌ 缺少必要字段: ' + missingFields.join(', ') + '\n\n';
+                } else {
+                    result += '✅ 所有必要字段都存在\n\n';
+                }
+                
+                result += '配置详情:\n';
+                result += `• Project ID: ${config.projectId}\n`;
+                result += `• Auth Domain: ${config.authDomain}\n`;
+                result += `• API Key: ${config.apiKey ? config.apiKey.substring(0, 10) + '...' : '未设置'}\n\n`;
+                
+                // 尝试初始化Firebase
+                const initSuccess = await initFirebase();
+                result += initSuccess ? '✅ Firebase初始化成功' : '❌ Firebase初始化失败';
+                
+                showResult('firebaseConfigResult', result, missingFields.length === 0 && initSuccess ? 'success' : 'error');
+                
+            } catch (error) {
+                showResult('firebaseConfigResult', '❌ Firebase配置检查失败:\n' + error.message, 'error');
+            }
+        }
+        
+        async function testNetworkConnections() {
+            showResult('networkResult', '正在测试网络连接...', 'info');
+            
+            const endpoints = [
+                { name: 'Google APIs', url: 'https://www.googleapis.com/' },
+                { name: 'Firebase Auth', url: 'https://identitytoolkit.googleapis.com/' },
+                { name: 'Google Accounts', url: 'https://accounts.google.com/' }
+            ];
+            
+            let results = ['=== 网络连接测试 ===\n'];
+            let allOk = true;
+            
+            for (const endpoint of endpoints) {
+                try {
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 5000);
+                    
+                    const response = await fetch(endpoint.url, {
+                        method: 'HEAD',
+                        signal: controller.signal,
+                        mode: 'no-cors'
+                    });
+                    
+                    clearTimeout(timeoutId);
+                    results.push(`✅ ${endpoint.name}: 连接正常`);
+                } catch (error) {
+                    allOk = false;
+                    if (error.name === 'AbortError') {
+                        results.push(`❌ ${endpoint.name}: 连接超时`);
+                    } else {
+                        results.push(`⚠️ ${endpoint.name}: ${error.message}`);
+                    }
+                }
+            }
+            
+            results.push('');
+            results.push(allOk ? '🎉 所有网络连接正常！' : '⚠️ 部分网络连接存在问题');
+            
+            showResult('networkResult', results.join('\n'), allOk ? 'success' : 'warning');
+        }
+        
+        async function testGoogleLogin() {
+            showResult('googleLoginResult', '正在测试Google登录...', 'info');
+            
+            try {
+                if (!firebaseInitialized) {
+                    const initSuccess = await initFirebase();
+                    if (!initSuccess) {
+                        throw new Error('Firebase初始化失败');
+                    }
+                }
+                
+                const provider = new firebase.auth.GoogleAuthProvider();
+                provider.addScope('email');
+                provider.addScope('profile');
+                
+                const result = await firebase.auth().signInWithPopup(provider);
+                
+                const user = result.user;
+                const successMsg = [
+                    '✅ Google登录测试成功！',
+                    '',
+                    `用户信息:`,
+                    `• 姓名: ${user.displayName}`,
+                    `• 邮箱: ${user.email}`,
+                    `• UID: ${user.uid}`,
+                    '',
+                    '🎉 Google登录功能正常工作！'
+                ].join('\n');
+                
+                showResult('googleLoginResult', successMsg, 'success');
+                
+                // 自动退出登录以便重新测试
+                setTimeout(() => {
+                    firebase.auth().signOut();
+                }, 2000);
+                
+            } catch (error) {
+                let errorMsg = '❌ Google登录测试失败:\n\n';
+                
+                if (error.code === 'auth/popup-closed-by-user') {
+                    errorMsg += '用户关闭了登录弹窗\n建议: 完成登录流程';
+                } else if (error.code === 'auth/popup-blocked') {
+                    errorMsg += '登录弹窗被浏览器拦截\n建议: 允许此网站的弹窗';
+                } else if (error.code === 'auth/cancelled-popup-request') {
+                    errorMsg += '登录请求被取消\n建议: 重新尝试登录';
+                } else if (error.code === 'auth/network-request-failed') {
+                    errorMsg += '网络请求失败\n建议: 检查网络连接';
+                } else {
+                    errorMsg += `错误代码: ${error.code}\n`;
+                    errorMsg += `错误信息: ${error.message}`;
+                }
+                
+                showResult('googleLoginResult', errorMsg, 'error');
+            }
+        }
+        
+        async function quickFix() {
+            showResult('quickFixResult', '正在尝试自动修复...', 'info');
+            
+            let fixAttempts = [];
+            
+            try {
+                // 修复1: 重新初始化Firebase
+                fixAttempts.push('🔧 重新初始化Firebase...');
+                const initSuccess = await initFirebase();
+                if (initSuccess) {
+                    fixAttempts.push('✅ Firebase重新初始化成功');
+                } else {
+                    fixAttempts.push('❌ Firebase重新初始化失败');
+                }
+                
+                // 修复2: 清除Auth状态
+                fixAttempts.push('🔧 清除认证状态...');
+                if (firebaseInitialized) {
+                    await firebase.auth().signOut();
+                    fixAttempts.push('✅ 认证状态已清除');
+                }
+                
+                // 修复3: 检查弹窗设置
+                fixAttempts.push('🔧 检查弹窗设置...');
+                try {
+                    const popup = window.open('', '_blank', 'width=1,height=1');
+                    if (popup) {
+                        popup.close();
+                        fixAttempts.push('✅ 弹窗功能正常');
+                    } else {
+                        fixAttempts.push('❌ 弹窗被拦截，请手动允许');
+                    }
+                } catch (e) {
+                    fixAttempts.push('❌ 弹窗测试失败');
+                }
+                
+                fixAttempts.push('');
+                fixAttempts.push('🎯 修复完成！请尝试重新登录。');
+                
+                showResult('quickFixResult', fixAttempts.join('\n'), 'success');
+                
+            } catch (error) {
+                fixAttempts.push('');
+                fixAttempts.push('❌ 自动修复过程中出现错误: ' + error.message);
+                showResult('quickFixResult', fixAttempts.join('\n'), 'error');
+            }
+        }
+        
+        // 页面加载完成后自动检查
+        window.addEventListener('load', () => {
+            console.log('🔍 Google登录诊断工具已加载');
+        });
+    </script>
+</body>
+</html>

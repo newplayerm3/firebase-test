@@ -13,8 +13,141 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics-compat.js"></script>
     
+    <!-- 直接内联Firebase初始化 -->
+    <script>
+        console.log('🔥 开始直接Firebase初始化...');
+        
+        // Firebase配置
+        const firebaseConfig = {
+            apiKey: "AIzaSyAPjCKi9CWvivVVxANhugEz6AY3lpRBVec",
+            authDomain: "smart-college-cf2b1.firebaseapp.com",
+            projectId: "smart-college-cf2b1",
+            storageBucket: "smart-college-cf2b1.firebasestorage.app",
+            messagingSenderId: "445324851190",
+            appId: "1:445324851190:web:35ab87f493ec126265f9d7",
+            measurementId: "G-B5E2CB2L66"
+        };
+        
+        // 全局Firebase对象
+        window.firebaseApp = null;
+        window.firebaseAuth = null;
+        window.firebaseReady = false;
+        
+        function initFirebaseNow() {
+            try {
+                console.log('🔥 Firebase SDK检查:', {
+                    firebase: typeof firebase,
+                    firebaseApp: typeof firebase?.initializeApp,
+                    firebaseAuth: typeof firebase?.auth
+                });
+                
+                if (typeof firebase === 'undefined') {
+                    throw new Error('Firebase SDK未加载');
+                }
+                
+                // 初始化Firebase应用
+                if (firebase.apps.length === 0) {
+                    console.log('🔥 初始化新的Firebase应用...');
+                    window.firebaseApp = firebase.initializeApp(firebaseConfig);
+                } else {
+                    console.log('🔥 使用现有Firebase应用...');
+                    window.firebaseApp = firebase.app();
+                }
+                
+                // 初始化Auth
+                window.firebaseAuth = firebase.auth();
+                window.firebaseReady = true;
+                
+                console.log('✅ Firebase直接初始化成功！');
+                console.log('Auth对象:', window.firebaseAuth);
+                
+                // 测试Auth状态监听
+                window.firebaseAuth.onAuthStateChanged((user) => {
+                    if (user) {
+                        console.log('👤 Firebase用户已登录:', user.email);
+                    } else {
+                        console.log('👤 Firebase用户未登录');
+                    }
+                });
+                
+                return true;
+                
+            } catch (error) {
+                console.error('❌ Firebase直接初始化失败:', error);
+                window.firebaseReady = false;
+                return false;
+            }
+        }
+        
+        // 立即尝试初始化
+        if (typeof firebase !== 'undefined') {
+            initFirebaseNow();
+        } else {
+            // 如果Firebase还没加载，等待一下
+            let attempts = 0;
+            const checkFirebase = () => {
+                attempts++;
+                if (typeof firebase !== 'undefined') {
+                    console.log('🔥 Firebase SDK已加载，开始初始化...');
+                    initFirebaseNow();
+                } else if (attempts < 50) {
+                    setTimeout(checkFirebase, 100);
+                } else {
+                    console.error('❌ Firebase SDK加载超时');
+                }
+            };
+            checkFirebase();
+        }
+        
+        // 简化的Google登录函数
+        window.directGoogleLogin = async function() {
+            try {
+                console.log('🔐 开始直接Google登录...');
+                
+                if (!window.firebaseReady || !window.firebaseAuth) {
+                    // 尝试重新初始化
+                    console.log('🔄 Firebase未就绪，尝试重新初始化...');
+                    const success = initFirebaseNow();
+                    if (!success) {
+                        throw new Error('Firebase初始化失败');
+                    }
+                }
+                
+                const provider = new firebase.auth.GoogleAuthProvider();
+                provider.addScope('email');
+                provider.addScope('profile');
+                
+                console.log('🔐 弹出Google登录窗口...');
+                const result = await window.firebaseAuth.signInWithPopup(provider);
+                
+                console.log('✅ Google登录成功:', result.user.email);
+                return result;
+                
+            } catch (error) {
+                console.error('❌ 直接Google登录失败:', error);
+                
+                let userMessage = 'Google登录失败';
+                if (error.code === 'auth/popup-closed-by-user') {
+                    userMessage = '登录窗口被关闭，请重试';
+                } else if (error.code === 'auth/popup-blocked') {
+                    userMessage = '登录弹窗被拦截，请允许弹窗后重试';
+                } else if (error.code === 'auth/network-request-failed') {
+                    userMessage = '网络连接失败，请检查网络';
+                } else if (error.message.includes('Firebase')) {
+                    userMessage = 'Firebase服务初始化失败';
+                }
+                
+                alert(userMessage + '\n\n详细错误: ' + error.message);
+                throw error;
+            }
+        };
+        
+        console.log('🔥 Firebase直接初始化脚本已加载');
+    </script>
+    
     <!-- Application Services -->
     <script src="assets/js/ai-service.js"></script>
+    <script src="firebase-simple-init.js"></script>
     <script src="assets/js/firebase-service.js"></script>
     <script src="firebase-init-fix.js"></script>
     <script src="assets/js/firebase-login-integration.js"></script>
@@ -5736,42 +5869,38 @@
         // Google login
         async function googleLogin() {
             try {
-                console.log('🔐 Initiating Google login...');
+                console.log('🔐 开始Google登录...');
                 
-                // Show loading message
-                window.showNotificationMessage?.('正在初始化Firebase服务...', 'info');
+                // 使用直接的Google登录方法
+                const result = await window.directGoogleLogin();
                 
-                // Wait for Firebase to be ready
-                const firebaseReady = await waitForFirebaseReady();
+                // 登录成功处理
+                const user = result.user;
+                console.log('✅ Google登录成功:', user.email);
                 
-                if (!firebaseReady) {
-                    throw new Error('Firebase service failed to initialize properly');
-                }
+                // 更新UI
+                updateUserAvatar({
+                    displayName: user.displayName,
+                    email: user.email,
+                    photoURL: user.photoURL,
+                    uid: user.uid
+                });
                 
-                console.log('✅ Firebase service ready, proceeding with Google login...');
-                window.showNotificationMessage?.('正在连接Google账户...', 'info');
+                // 保存用户信息
+                localStorage.setItem('currentUser', JSON.stringify({
+                    displayName: user.displayName,
+                    email: user.email,
+                    photoURL: user.photoURL,
+                    uid: user.uid,
+                    loginType: 'google'
+                }));
                 
-                await window.firebaseService.signInWithGoogle();
+                // 跳转到主界面
+                showCareer();
                 
             } catch (error) {
                 console.error('❌ Google登录失败:', error);
-                
-                // Provide more specific error messages
-                let errorMessage = 'Google登录失败，请重试';
-                
-                if (error.message.includes('popup')) {
-                    errorMessage = '登录弹窗被阻止，请允许弹窗后重试';
-                } else if (error.message.includes('network')) {
-                    errorMessage = '网络连接问题，请检查网络后重试';
-                } else if (error.message.includes('timeout') || error.message.includes('failed to initialize')) {
-                    errorMessage = 'Firebase服务初始化失败，请刷新页面重试';
-                } else if (error.message.includes('auth')) {
-                    errorMessage = '认证服务错误，请稍后重试';
-                } else {
-                    errorMessage += '：' + error.message;
-                }
-                
-                window.showNotificationMessage?.(errorMessage, 'error');
+                // 错误处理已经在directGoogleLogin中完成
             }
         }
         
@@ -6546,16 +6675,6 @@
                 
                 // Update provider indicator after successful response
                 updateProviderIndicator(aiService.getCurrentProvider());
-                
-                // Add provider switch notification if using fallback
-                if (aiService.getCurrentProvider() === 'fallback') {
-                    // 为备用API添加提示信息
-                    const notificationText = '\n\n💡 此回答由ChatGPT提供（2brain AI暂时不可用）';
-                    const messageText = streamingMessageDiv.querySelector('.message-text');
-                    if (messageText) {
-                        messageText.textContent = aiReply + notificationText;
-                    }
-                }
             } catch (error) {
                 console.error('AI reply error:', error);
                 
@@ -6576,9 +6695,6 @@
                 }
                 
                 addMessageToChat('assistant', errorMessage);
-                
-                        // Add retry button
-        addRetryButton();
     } finally {
         // Restore send button state
         sendBtn.disabled = false;
@@ -6587,36 +6703,7 @@
     }
 }
 
-// Add retry button
-function addRetryButton() {
-    const chatMessages = document.getElementById('chatMessages');
-    const retryDiv = document.createElement('div');
-    retryDiv.className = 'message assistant-message';
-    retryDiv.innerHTML = `
-        <div class="message-avatar">🔧</div>
-        <div class="message-content">
-            <div class="message-text">
-                <strong>Need help?</strong><br>
-                <button class="btn btn-primary" onclick="retryAIService()" style="margin: 10px 5px; padding: 8px 16px; font-size: 14px;">
-                    🔄 Retry AI Service
-                </button>
-                <button class="btn btn-secondary" onclick="openDiagnosticPage()" style="margin: 10px 5px; padding: 8px 16px; font-size: 14px;">
-                    🔍 Diagnose Problem
-                </button>
-                <button class="btn btn-secondary" onclick="checkAPIStatus()" style="margin: 10px 5px; padding: 8px 16px; font-size: 14px;">
-                    🌐 Check API Status
-                </button>
-            </div>
-            <div class="message-time">${new Date().toLocaleTimeString('en-US', { 
-                hour: '2-digit', 
-                minute: '2-digit' 
-            })}</div>
-        </div>
-    `;
-    
-    chatMessages.appendChild(retryDiv);
-    chatMessages.scrollTop = chatMessages.scrollHeight;
-}
+
 
 // Retry AI service
 async function retryAIService() {

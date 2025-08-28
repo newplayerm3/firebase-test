@@ -17,7 +17,8 @@ window.CONFIG = {
     api: {
         // 2brain AI API配置
         aiService: {
-            baseUrl: 'https://api.2brain.ai/v1',
+            baseUrl: 'https://portal.2brain.ai/api/bot/chat/v1',
+            apiKey: '2B-Gkl2EqlkO1xHAwnRkRIjEmd129zAKUKXLhlj5nO516jtl5xhmx',
             model: 'gpt-4',
             maxTokens: 2000,
             temperature: 0.7,

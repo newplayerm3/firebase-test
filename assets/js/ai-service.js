@@ -6,8 +6,9 @@
 class AIService {
     constructor() {
         this.apiKey = null;
-        this.baseUrl = 'https://api.2brain.ai/v1';
+        this.baseUrl = 'https://portal.2brain.ai/api/bot/chat/v1';
         this.isInitialized = false;
+        this.language = 'zh-CN';
         this.config = window.CONFIG?.api?.aiService;
         
         this.init();
@@ -27,7 +28,8 @@ class AIService {
                     model: 'gpt-4',
                     maxTokens: 2000,
                     temperature: 0.7,
-                    timeout: 30000
+                    timeout: 30000,
+                    apiKey: '2B-Gkl2EqlkO1xHAwnRkRIjEmd129zAKUKXLhlj5nO516jtl5xhmx'
                 };
             }
 
@@ -36,8 +38,16 @@ class AIService {
             // Try to get API key from various sources
             this.apiKey = this.getApiKey();
             
+            // Fallback: use hardcoded API key if not found elsewhere
+            if (!this.apiKey) {
+                console.log('🔧 Using fallback API key...');
+                this.apiKey = '2B-Gkl2EqlkO1xHAwnRkRIjEmd129zAKUKXLhlj5nO516jtl5xhmx';
+            }
+            
             if (!this.apiKey) {
                 console.warn('⚠️ AI API key not available - some features may be limited');
+            } else {
+                console.log('✅ AI API key loaded:', this.apiKey.substring(0, 10) + '...');
             }
 
             this.isInitialized = true;
@@ -53,21 +63,33 @@ class AIService {
      * Get API key from various sources
      */
     getApiKey() {
+        console.log('🔍 Checking API key sources...');
+        
         // Try different sources for API key
         if (typeof window.getApiKey === 'function') {
+            console.log('📍 Found window.getApiKey function');
             return window.getApiKey();
         }
         
         if (window.CONFIG?.api?.aiService?.apiKey) {
+            console.log('📍 Found API key in CONFIG:', window.CONFIG.api.aiService.apiKey.substring(0, 10) + '...');
             return window.CONFIG.api.aiService.apiKey;
+        }
+        
+        // Check config object
+        if (this.config?.apiKey) {
+            console.log('📍 Found API key in this.config:', this.config.apiKey.substring(0, 10) + '...');
+            return this.config.apiKey;
         }
         
         // Check localStorage
         const storedKey = localStorage.getItem('ai_api_key');
         if (storedKey) {
+            console.log('📍 Found API key in localStorage:', storedKey.substring(0, 10) + '...');
             return storedKey;
         }
         
+        console.log('⚠️ No API key found in any source, will use fallback');
         return null;
     }
 
@@ -78,6 +100,29 @@ class AIService {
         this.apiKey = apiKey;
         localStorage.setItem('ai_api_key', apiKey);
         console.log('✅ AI API key updated');
+    }
+
+    /**
+     * Set language preference
+     */
+    setLanguage(language) {
+        this.language = language || 'zh-CN';
+        localStorage.setItem('ai_language', this.language);
+        console.log('✅ AI language set to:', this.language);
+    }
+
+    /**
+     * Get current language
+     */
+    getLanguage() {
+        return this.language || localStorage.getItem('ai_language') || 'zh-CN';
+    }
+
+    /**
+     * Get current provider
+     */
+    getCurrentProvider() {
+        return '2brain AI';
     }
 
     /**
@@ -92,12 +137,10 @@ class AIService {
             }
 
             const response = await this.makeRequest('/chat/completions', {
-                model: this.config.model || 'gpt-4',
                 messages: [
                     { role: 'user', content: 'Hello, this is a connection test.' }
                 ],
-                max_tokens: 10,
-                temperature: 0.1
+                stream: false
             });
 
             console.log('✅ AI API connection successful');
@@ -141,10 +184,7 @@ class AIService {
             ];
 
             const requestData = {
-                model: this.config.model || 'gpt-4',
                 messages: messages,
-                max_tokens: this.config.maxTokens || 2000,
-                temperature: this.config.temperature || 0.7,
                 stream: false
             };
 

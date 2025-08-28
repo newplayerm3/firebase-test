@@ -202,49 +202,8 @@ class MainApp {
      * Show notification message
      */
     showNotification(message, type = 'info') {
-        const notification = document.createElement('div');
-        notification.className = `notification notification-${type}`;
-        notification.textContent = message;
-        
-        // Add styles
-        Object.assign(notification.style, {
-            position: 'fixed',
-            top: '20px',
-            right: '20px',
-            padding: '16px 24px',
-            borderRadius: '8px',
-            color: 'white',
-            fontWeight: '600',
-            zIndex: '10001',
-            transform: 'translateX(100%)',
-            transition: 'transform 0.3s ease'
-        });
-
-        // Set background color based on type
-        const colors = {
-            info: '#3b82f6',
-            success: '#10b981',
-            warning: '#f59e0b',
-            error: '#ef4444'
-        };
-        notification.style.background = colors[type] || colors.info;
-
-        document.body.appendChild(notification);
-
-        // Animate in
-        setTimeout(() => {
-            notification.style.transform = 'translateX(0)';
-        }, 100);
-
-        // Auto remove after 3 seconds
-        setTimeout(() => {
-            notification.style.transform = 'translateX(100%)';
-            setTimeout(() => {
-                if (notification.parentNode) {
-                    notification.parentNode.removeChild(notification);
-                }
-            }, 300);
-        }, 3000);
+        // 禁用右上角弹窗，只在控制台输出
+        console.log(`[${type.toUpperCase()}] ${message}`);
     }
 }
 
