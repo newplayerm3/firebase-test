@@ -20,10 +20,10 @@ jobs:
       with:
         publish-dir: '.'
         production-branch: main
-        github-token: ${{ secrets.USER_WITH_TOKEN }}
+        github-token: ${{ secrets.GITHUB_TOKEN }}
         deploy-message: "Auto deploy: ${{ github.event.head_commit.message }}"
         enable-commit-status: true
       env:
-        NETLIFY_AUTH_TOKEN: ${{ secrets.USER_WITH_TOKEN }}
-        NETLIFY_SITE_ID: ${{ secrets.SMART_COLLEGE_11451 }}
+        NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+        NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
       timeout-minutes: 5

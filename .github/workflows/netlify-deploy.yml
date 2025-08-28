@@ -103,7 +103,7 @@ jobs:
         # 生产环境部署
         production-branch: main
         # GitHub Token (用于更新PR状态)
-        github-token: ${{ secrets.USER_WITH_TOKEN }}
+        github-token: ${{ secrets.GITHUB_TOKEN }}
         # 部署消息
         deploy-message: "Deploy from GitHub Actions - ${{ github.event.head_commit.message }}"
         # 启用提交状态
@@ -116,9 +116,9 @@ jobs:
         alias: deploy-preview-${{ github.event.number }}
       env:
         # Netlify Auth Token
-        NETLIFY_AUTH_TOKEN: ${{ secrets.USER_WITH_TOKEN }}
+        NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
         # Netlify Site ID
-        NETLIFY_SITE_ID: ${{ secrets.SMART_COLLEGE_11451 }}
+        NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
       timeout-minutes: 10
     
     # 6. 部署成功通知
