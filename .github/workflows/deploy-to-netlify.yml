@@ -1,0 +1,180 @@
+name: Deploy Smart College to Netlify
+
+# 触发条件：推送到main分支或手动触发
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:  # 允许手动触发
+
+# 环境变量
+env:
+  NODE_VERSION: '18'
+
+jobs:
+  build-and-deploy:
+    name: Build and Deploy to Netlify
+    runs-on: ubuntu-latest
+    
+    steps:
+    # 1. 检出代码
+    - name: 🛒 Checkout Repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # 获取完整git历史
+    
+    # 2. 设置Node.js环境（如果需要）
+    - name: 🚀 Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        cache-dependency-path: '**/package-lock.json'
+    
+    # 3. 安装后端依赖（如果存在）
+    - name: 📦 Install Dependencies
+      run: |
+        if [ -f backend/package.json ]; then
+          echo "Installing backend dependencies..."
+          cd backend
+          npm ci
+          cd ..
+        else
+          echo "No backend package.json found, skipping dependencies installation"
+        fi
+    
+    # 4. 准备部署文件
+    - name: 🔨 Prepare Build
+      run: |
+        echo "Preparing Smart College Advisor for deployment..."
+        
+        # 创建部署目录
+        mkdir -p deploy
+        
+        # 复制所有必要的前端文件
+        cp -r assets/ deploy/ 2>/dev/null || echo "No assets directory found"
+        cp index.html deploy/
+        cp config.js deploy/ 2>/dev/null || echo "No config.js found"
+        
+        # 复制Firebase相关文件
+        cp firebase-*.js deploy/ 2>/dev/null || echo "No firebase files found"
+        cp firebase-*.html deploy/ 2>/dev/null || echo "No firebase HTML files found"
+        
+        # 复制其他重要文件
+        cp google-login-debug.html deploy/ 2>/dev/null || echo "No google-login-debug.html found"
+        cp complete_features.html deploy/ 2>/dev/null || echo "No complete_features.html found"
+        
+        # 如果存在netlify.toml，复制它
+        if [ -f netlify.toml ]; then
+          cp netlify.toml deploy/
+        else
+          # 创建netlify.toml配置文件
+          cat > deploy/netlify.toml << 'EOF'
+[build]
+  publish = "."
+
+[build.environment]
+  NODE_VERSION = "18"
+
+# SPA路由重定向
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# 安全头设置
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-XSS-Protection = "1; mode=block"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.gstatic.com https://apis.google.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://generativelanguage.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://smart-college-cf2b1-default-rtdb.firebaseio.com; font-src 'self' data:; object-src 'none'; base-uri 'self';"
+
+# 静态资源缓存
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/*.js"
+  [headers.values]
+    Cache-Control = "public, max-age=86400"
+
+[[headers]]
+  for = "/*.css"
+  [headers.values]
+    Cache-Control = "public, max-age=86400"
+EOF
+        fi
+        
+        # 创建_redirects文件（备用方案）
+        echo "/* /index.html 200" > deploy/_redirects
+        
+        echo "✅ Build preparation completed!"
+        echo "📁 Deploy directory contents:"
+        ls -la deploy/
+    
+    # 5. 部署到Netlify
+    - name: 🚀 Deploy to Netlify
+      uses: nwtgck/actions-netlify@v3.0
+      with:
+        # 部署目录
+        publish-dir: './deploy'
+        # 生产分支
+        production-branch: main
+        # GitHub Token
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        # 部署消息
+        deploy-message: |
+          Deploy Smart College Advisor
+          Branch: ${{ github.ref_name }}
+          Commit: ${{ github.sha }}
+          Message: ${{ github.event.head_commit.message }}
+        # 启用状态检查
+        enable-commit-status: true
+        enable-pull-request-comment: true
+        overwrites-pull-request-comment: true
+        # 预览部署别名
+        alias: ${{ github.event.number && format('pr-{0}', github.event.number) || '' }}
+      env:
+        # 使用你提供的正确变量名
+        NETLIFY_AUTH_TOKEN: ${{ secrets.USER_WITH_TOKEN }}
+        NETLIFY_SITE_ID: ${{ secrets.SMARTCOLLEGE810429 }}
+      timeout-minutes: 10
+    
+    # 6. 部署成功通知
+    - name: 🎉 Deployment Success
+      if: success()
+      run: |
+        echo "🎉 Smart College Advisor deployed successfully!"
+        echo "🌐 Your site should be live at your Netlify domain"
+        echo ""
+        echo "📊 Deployment Details:"
+        echo "  🌿 Branch: ${{ github.ref_name }}"
+        echo "  📝 Commit: ${{ github.sha }}"
+        echo "  💬 Message: ${{ github.event.head_commit.message }}"
+        echo "  ⏰ Time: $(date)"
+        echo ""
+        echo "🔗 Check your Netlify dashboard for the live URL!"
+    
+    # 7. 部署失败处理
+    - name: 💥 Deployment Failed
+      if: failure()
+      run: |
+        echo "💥 Deployment failed!"
+        echo ""
+        echo "🔍 Troubleshooting steps:"
+        echo "1. Check if USER_WITH_TOKEN is correctly set in GitHub Secrets"
+        echo "2. Check if SMARTCOLLEGE810429 is correctly set in GitHub Secrets"
+        echo "3. Verify your Netlify token has the correct permissions"
+        echo "4. Check the build logs above for specific error messages"
+        echo ""
+        echo "🛠️ GitHub Secrets should contain:"
+        echo "  - USER_WITH_TOKEN: Your Netlify personal access token"
+        echo "  - SMARTCOLLEGE810429: Your Netlify site ID"
+        echo ""
+        echo "📚 For help, check: https://docs.netlify.com/configure-builds/get-started/"
