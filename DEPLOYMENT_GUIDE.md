@@ -38,7 +38,7 @@
 
 在GitHub仓库设置中配置以下Secrets：
 
-### 1. NETLIFY_AUTH_TOKEN
+### 1. USER_WITH_TOKEN
 - **用途：** Netlify认证令牌
 - **获取方式：**
   1. 登录 [Netlify](https://netlify.com)
@@ -46,7 +46,7 @@
   3. 点击 "New access token"
   4. 复制生成的token
 
-### 2. NETLIFY_SITE_ID
+### 2. SMART_COLLEGE_11451
 - **用途：** Netlify站点ID
 - **获取方式：**
   1. 在Netlify中选择你的站点

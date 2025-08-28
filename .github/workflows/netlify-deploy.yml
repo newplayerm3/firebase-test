@@ -115,10 +115,10 @@ jobs:
         # 别名（用于预览部署）
         alias: deploy-preview-${{ github.event.number }}
       env:
-        # Netlify Auth Token
-        NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-        # Netlify Site ID
-        NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+        # Netlify Auth Token (使用你设置的USER_WITH_TOKEN)
+        NETLIFY_AUTH_TOKEN: ${{ secrets.USER_WITH_TOKEN }}
+        # Netlify Site ID (使用你设置的SMART_COLLEGE_11451)
+        NETLIFY_SITE_ID: ${{ secrets.SMART_COLLEGE_11451 }}
       timeout-minutes: 10
     
     # 6. 部署成功通知
