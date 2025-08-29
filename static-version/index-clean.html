@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能升学助手 - 大学申请指导平台</title>
+    <meta name="description" content="专业的大学申请指导平台，提供升学规划、院校信息、申请策略等服务">
+    <meta name="keywords" content="升学指导,大学申请,专业选择,院校信息,申请策略">
+    
+    <!-- 样式文件 -->
+    <link rel="stylesheet" href="assets/css/main.css">
+    
+    <!-- 网站图标 -->
+    <link rel="icon" type="image/x-icon" href="assets/images/favicon.ico">
+    
+    <!-- Open Graph 标签 -->
+    <meta property="og:title" content="智能升学助手">
+    <meta property="og:description" content="专业的大学申请指导平台">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://your-domain.netlify.app">
+</head>
+<body>
+    <!-- 通知横幅 -->
+    <div id="notificationBanner" class="notification-banner">
+        <div class="notification-content">
+            <span>🎉 欢迎使用智能升学助手！我们提供专业的升学指导服务。</span>
+            <button class="notification-close" onclick="closeNotification()">×</button>
+        </div>
+    </div>
+
+    <!-- 主界面 -->
+    <div id="mainContainer" class="main-container">
+        <header class="header">
+            <nav class="nav-container">
+                <div class="logo">
+                    <img src="assets/images/logo.png" alt="智能升学助手" loading="lazy">
+                    <span>智能升学助手</span>
+                </div>
+                
+                <div class="nav-menu">
+                    <a href="#ai-assistant" class="nav-item" onclick="showFeature('ai')">🤖 AI助手</a>
+                    <a href="#question-bank" class="nav-item" onclick="showFeature('question')">📚 智能题库</a>
+                    <a href="#strategy" class="nav-item" onclick="showFeature('strategy')">📊 申请策略</a>
+                    <a href="#resources" class="nav-item" onclick="showFeature('resource')">📖 学习资源</a>
+                    <a href="#community" class="nav-item" onclick="showFeature('community')">👥 学习社区</a>
+                    <a href="#announcements" class="nav-item" onclick="showFeature('announcement')">📢 学校公告</a>
+                    <a href="#about" class="nav-item" onclick="showFeature('about')">ℹ️ 关于我们</a>
+                </div>
+                
+                <button class="contact-btn" onclick="showContactModal()">
+                    📞 联系我们
+                </button>
+                
+                <button class="settings-btn" onclick="showSettings()">
+                    ⚙️ 设置
+                </button>
+            </nav>
+        </header>
+        
+        <main class="hero-section">
+            <div class="hero-content">
+                <div class="hero-header">
+                    <h1 class="hero-title">智能升学助手</h1>
+                    <p class="hero-subtitle">
+                        专业的大学申请指导平台<br>
+                        助您实现梦想大学的申请目标
+                    </p>
+                    <div class="hero-badges">
+                        <span class="hero-badge">🎯 专业指导</span>
+                        <span class="hero-badge">📚 丰富资源</span>
+                        <span class="hero-badge">🚀 快速提升</span>
+                        <span class="hero-badge">🌟 成功保障</span>
+                    </div>
+                </div>
+                
+                <!-- 搜索框 -->
+                <div class="search-container">
+                    <input type="text" class="search-box" placeholder="🔍 搜索大学、专业、课程..." id="searchBox">
+                    <div class="search-icon">🔍</div>
+                </div>
+                <p class="search-tip">
+                    💡 提示：输入关键词如"计算机科学"、"清华大学"、"高考数学"等
+                </p>
+                
+                <!-- 统计数据 -->
+                <div class="stats-container">
+                    <div class="stat-card">
+                        <div class="stat-number">50万+</div>
+                        <div class="stat-label">注册用户</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">100+</div>
+                        <div class="stat-label">合作院校</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">98%</div>
+                        <div class="stat-label">用户满意度</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">100万+</div>
+                        <div class="stat-label">题库数量</div>
+                    </div>
+                </div>
+                
+                <!-- 合作院校 -->
+                <div class="universities-container">
+                    <h3 class="universities-title">
+                        🌍 全球顶尖合作院校
+                    </h3>
+                    <div class="universities-grid">
+                        <div class="university-card" onclick="showUniversityInfo('tsinghua')">
+                            <div class="university-flag">🇨🇳</div>
+                            <div class="university-name">清华大学</div>
+                            <div class="university-desc">中国顶尖学府</div>
+                        </div>
+                        <div class="university-card" onclick="showUniversityInfo('beijing')">
+                            <div class="university-flag">🇨🇳</div>
+                            <div class="university-name">北京大学</div>
+                            <div class="university-desc">百年名校</div>
+                        </div>
+                        <div class="university-card" onclick="showUniversityInfo('harvard')">
+                            <div class="university-flag">🇺🇸</div>
+                            <div class="university-name">哈佛大学</div>
+                            <div class="university-desc">世界顶级研究型大学</div>
+                        </div>
+                        <div class="university-card" onclick="showUniversityInfo('mit')">
+                            <div class="university-flag">🇺🇸</div>
+                            <div class="university-name">麻省理工学院</div>
+                            <div class="university-desc">科技创新的摇篮</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- AI助手功能 -->
+    <div id="aiFeature" class="feature-content">
+        <div class="feature-header">
+            <h2>🤖 智能升学助手</h2>
+            <p>基于先进技术，为您提供个性化的升学指导</p>
+        </div>
+        
+        <div class="ai-features-grid">
+            <div class="ai-feature-card">
+                <div class="feature-icon">🎯</div>
+                <h3>专业选择指导</h3>
+                <p>通过专业分析您的兴趣、能力和职业规划，推荐最适合的专业方向</p>
+                <div class="feature-examples">
+                    <span class="example-tag">兴趣测评</span>
+                    <span class="example-tag">能力分析</span>
+                    <span class="example-tag">职业前景</span>
+                </div>
+            </div>
+            
+            <div class="ai-feature-card">
+                <div class="feature-icon">🏫</div>
+                <h3>院校智能匹配</h3>
+                <p>根据您的分数、专业偏好和地区要求，智能推荐最适合的大学</p>
+                <div class="feature-examples">
+                    <span class="example-tag">分数匹配</span>
+                    <span class="example-tag">专业匹配</span>
+                    <span class="example-tag">录取概率</span>
+                </div>
+            </div>
+            
+            <div class="ai-feature-card">
+                <div class="feature-icon">📝</div>
+                <h3>申请材料指导</h3>
+                <p>专业指导个人陈述、推荐信等申请材料的撰写和优化</p>
+                <div class="feature-examples">
+                    <span class="example-tag">文书指导</span>
+                    <span class="example-tag">材料优化</span>
+                    <span class="example-tag">成功案例</span>
+                </div>
+            </div>
+            
+            <div class="ai-feature-card">
+                <div class="feature-icon">📚</div>
+                <h3>学习规划建议</h3>
+                <p>制定个性化的学习计划，提供科学的时间管理和复习策略</p>
+                <div class="feature-examples">
+                    <span class="example-tag">学习计划</span>
+                    <span class="example-tag">时间管理</span>
+                    <span class="example-tag">复习策略</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="ai-demo-section">
+            <h3>💡 升学指导示例</h3>
+            <div class="demo-chat">
+                <div class="demo-message user">
+                    <div class="message-avatar">👤</div>
+                    <div class="message-content">
+                        我想学计算机科学，但不知道选择哪个大学比较好
+                    </div>
+                </div>
+                <div class="demo-message ai">
+                    <div class="message-avatar">🤖</div>
+                    <div class="message-content">
+                        根据您的需求，我推荐以下院校：<br>
+                        • 清华大学 - 计算机科学与技术专业全国第一<br>
+                        • 北京大学 - 计算机科学专业实力强劲<br>
+                        • 上海交通大学 - 计算机专业就业前景优秀<br>
+                        • 浙江大学 - 计算机科学专业综合实力强
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <button class="back-btn" onclick="hideFeature()">← 返回主页</button>
+    </div>
+
+    <!-- 智能题库功能 -->
+    <div id="questionFeature" class="feature-content">
+        <div class="feature-header">
+            <h2>📚 智能题库系统</h2>
+            <p>海量优质题目，智能推荐，助您高效备考</p>
+        </div>
+        
+        <div class="question-categories">
+            <div class="category-card">
+                <h3>高考科目</h3>
+                <div class="subject-list">
+                    <span class="subject-item">语文</span>
+                    <span class="subject-item">数学</span>
+                    <span class="subject-item">英语</span>
+                    <span class="subject-item">物理</span>
+                    <span class="subject-item">化学</span>
+                    <span class="subject-item">生物</span>
+                </div>
+            </div>
+            
+            <div class="category-card">
+                <h3>国际考试</h3>
+                <div class="subject-list">
+                    <span class="subject-item">SAT</span>
+                    <span class="subject-item">ACT</span>
+                    <span class="subject-item">AP</span>
+                    <span class="subject-item">IB</span>
+                    <span class="subject-item">A-Level</span>
+                </div>
+            </div>
+            
+            <div class="category-card">
+                <h3>专业课程</h3>
+                <div class="subject-list">
+                    <span class="subject-item">计算机科学</span>
+                    <span class="subject-item">工程学</span>
+                    <span class="subject-item">医学</span>
+                    <span class="subject-item">商学</span>
+                    <span class="subject-item">艺术设计</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="question-stats">
+            <div class="stat-item">
+                <div class="stat-number">100万+</div>
+                <div class="stat-label">题目总数</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">50+</div>
+                <div class="stat-label">学科门类</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">95%</div>
+                <div class="stat-label">题目准确率</div>
+            </div>
+        </div>
+        
+        <button class="back-btn" onclick="hideFeature()">← 返回主页</button>
+    </div>
+
+    <!-- 申请策略功能 -->
+    <div id="strategyFeature" class="feature-content">
+        <div class="feature-header">
+            <h2>📊 申请策略指导</h2>
+            <p>数据驱动的申请策略，提高录取成功率</p>
+        </div>
+        
+        <div class="strategy-timeline">
+            <div class="timeline-item">
+                <div class="timeline-date">高三上学期</div>
+                <div class="timeline-content">
+                    <h4>准备阶段</h4>
+                    <ul>
+                        <li>确定目标院校和专业</li>
+                        <li>准备标准化考试</li>
+                        <li>收集申请材料</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="timeline-item">
+                <div class="timeline-date">高三下学期</div>
+                <div class="timeline-content">
+                    <h4>申请阶段</h4>
+                    <ul>
+                        <li>提交申请材料</li>
+                        <li>参加面试</li>
+                        <li>跟踪申请状态</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="timeline-item">
+                <div class="timeline-date">高考后</div>
+                <div class="timeline-content">
+                    <h4>录取阶段</h4>
+                    <ul>
+                        <li>查看录取结果</li>
+                        <li>选择最终院校</li>
+                        <li>准备入学材料</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <button class="back-btn" onclick="hideFeature()">← 返回主页</button>
+    </div>
+
+    <!-- 学习资源功能 -->
+    <div id="resourceFeature" class="feature-content">
+        <div class="feature-header">
+            <h2>📖 学习资源中心</h2>
+            <p>丰富的学习资料，助您全面提升</p>
+        </div>
+        
+        <div class="resources-grid">
+            <div class="resource-card">
+                <div class="resource-icon">📚</div>
+                <h3>教材资料</h3>
+                <p>各科目最新教材和参考资料</p>
+                <a href="#" class="resource-link">查看详情 →</a>
+            </div>
+            
+            <div class="resource-card">
+                <div class="resource-icon">🎥</div>
+                <h3>视频课程</h3>
+                <p>名师在线授课，随时随地学习</p>
+                <a href="#" class="resource-link">观看课程 →</a>
+            </div>
+            
+            <div class="resource-card">
+                <div class="resource-icon">📝</div>
+                <h3>真题解析</h3>
+                <p>历年真题详解，掌握解题技巧</p>
+                <a href="#" class="resource-link">查看解析 →</a>
+            </div>
+            
+            <div class="resource-card">
+                <div class="resource-icon">📊</div>
+                <h3>数据分析</h3>
+                <p>录取数据分析，了解竞争情况</p>
+                <a href="#" class="resource-link">查看数据 →</a>
+            </div>
+        </div>
+        
+        <button class="back-btn" onclick="hideFeature()">← 返回主页</button>
+    </div>
+
+    <!-- 学习社区功能 -->
+    <div id="communityFeature" class="feature-content">
+        <div class="feature-header">
+            <h2>👥 学习社区</h2>
+            <p>与志同道合的同学交流学习，共同进步</p>
+        </div>
+        
+        <div class="community-features">
+            <div class="community-card">
+                <div class="community-icon">💬</div>
+                <h3>学习讨论</h3>
+                <p>分享学习心得，解答疑难问题</p>
+            </div>
+            
+            <div class="community-card">
+                <div class="community-icon">👥</div>
+                <h3>学习小组</h3>
+                <p>组建学习小组，互相督促</p>
+            </div>
+            
+            <div class="community-card">
+                <div class="community-icon">🏆</div>
+                <h3>学习竞赛</h3>
+                <p>参与学习竞赛，检验学习成果</p>
+            </div>
+        </div>
+        
+        <button class="back-btn" onclick="hideFeature()">← 返回主页</button>
+    </div>
+
+    <!-- 学校公告功能 -->
+    <div id="announcementFeature" class="feature-content">
+        <div class="feature-header">
+            <h2>📢 学校公告</h2>
+            <p>及时了解各院校最新招生信息和政策变化</p>
+        </div>
+        
+        <div class="announcements-list">
+            <div class="announcement-item">
+                <div class="announcement-date">2024-01-15</div>
+                <div class="announcement-content">
+                    <h4>清华大学2024年招生简章发布</h4>
+                    <p>清华大学2024年本科招生简章正式发布，包含招生计划、录取要求等重要信息...</p>
+                </div>
+            </div>
+            
+            <div class="announcement-item">
+                <div class="announcement-date">2024-01-10</div>
+                <div class="announcement-content">
+                    <h4>北京大学强基计划招生启动</h4>
+                    <p>北京大学2024年强基计划招生工作正式启动，面向全国招收优秀学生...</p>
+                </div>
+            </div>
+            
+            <div class="announcement-item">
+                <div class="announcement-date">2024-01-05</div>
+                <div class="announcement-content">
+                    <h4>高考改革新政策解读</h4>
+                    <p>教育部发布最新高考改革政策，对2024年及以后的高考产生重要影响...</p>
+                </div>
+            </div>
+        </div>
+        
+        <button class="back-btn" onclick="hideFeature()">← 返回主页</button>
+    </div>
+
+    <!-- 关于我们功能 -->
+    <div id="aboutFeature" class="feature-content">
+        <div class="feature-header">
+            <h2>ℹ️ 关于我们</h2>
+            <p>了解智能升学助手的使命和愿景</p>
+        </div>
+        
+        <div class="about-content">
+            <div class="about-section">
+                <h3>我们的使命</h3>
+                <p>通过专业技术和指导，帮助每一位学生找到最适合的升学路径，实现教育梦想。</p>
+            </div>
+            
+            <div class="about-section">
+                <h3>我们的愿景</h3>
+                <p>成为最受信赖的升学指导平台，让每一个梦想都有迹可循。</p>
+            </div>
+            
+            <div class="about-section">
+                <h3>核心价值</h3>
+                <ul>
+                    <li>专业性 - 提供准确、权威的升学信息</li>
+                    <li>个性化 - 根据学生特点定制指导方案</li>
+                    <li>创新性 - 运用最新技术提升服务质量</li>
+                    <li>责任性 - 对学生未来负责，提供可靠建议</li>
+                </ul>
+            </div>
+            
+            <div class="about-section">
+                <h3>联系我们</h3>
+                <div class="contact-info">
+                    <p>📧 邮箱：contact@smart-college.com</p>
+                    <p>📱 微信：SmartCollegeAdvisor</p>
+                    <p>🌐 网站：www.smart-college.com</p>
+                </div>
+            </div>
+        </div>
+        
+        <button class="back-btn" onclick="hideFeature()">← 返回主页</button>
+    </div>
+
+    <!-- 联系模态框 -->
+    <div id="contactModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>📞 联系我们</h3>
+                <span class="modal-close" onclick="closeContactModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form class="contact-form">
+                    <div class="form-group">
+                        <label for="contactName">姓名</label>
+                        <input type="text" id="contactName" name="name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="contactEmail">邮箱</label>
+                        <input type="email" id="contactEmail" name="email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="contactMessage">留言</label>
+                        <textarea id="contactMessage" name="message" rows="4" required></textarea>
+                    </div>
+                    <button type="submit" class="submit-btn">发送留言</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- 页脚 -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-section">
+                <h4>智能升学助手</h4>
+                <p>专业的升学指导平台</p>
+            </div>
+            <div class="footer-section">
+                <h4>快速链接</h4>
+                <ul>
+                    <li><a href="#ai-assistant">升学指导</a></li>
+                    <li><a href="#question-bank">智能题库</a></li>
+                    <li><a href="#strategy">申请策略</a></li>
+                    <li><a href="#resources">学习资源</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h4>联系我们</h4>
+                <p>📧 contact@smart-college.com</p>
+                <p>📱 微信：SmartCollegeAdvisor</p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2024 智能升学助手. 保留所有权利.</p>
+        </div>
+    </footer>
+
+    <!-- JavaScript文件 -->
+    <script src="assets/js/main.js"></script>
+</body>
+</html>
