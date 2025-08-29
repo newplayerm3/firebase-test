@@ -6,10 +6,6 @@ on:
     branches: [ main ]
   workflow_dispatch:  # 允许手动触发
 
-# 环境变量
-env:
-  NODE_VERSION: '18'
-
 jobs:
   deploy:
     name: 🚀 Deploy to Netlify
@@ -22,14 +18,7 @@ jobs:
       with:
         fetch-depth: 0  # 获取完整git历史
     
-    # 2. 设置Node.js环境
-    - name: 🚀 Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: ${{ env.NODE_VERSION }}
-        cache: 'npm'
-    
-    # 3. 准备部署文件
+    # 2. 准备部署文件
     - name: 🔨 Prepare Deployment Files
       run: |
         echo "📁 Preparing Smart College Advisor for deployment..."
@@ -102,7 +91,7 @@ jobs:
         echo "📁 Deploy directory contents:"
         ls -la deploy/
     
-    # 4. 部署到Netlify
+    # 3. 部署到Netlify
     - name: 🚀 Deploy to Netlify
       uses: nwtgck/actions-netlify@v3.0
       with:
@@ -131,7 +120,7 @@ jobs:
         NETLIFY_SITE_ID: ${{ secrets.NETLIFY_PROJECT_ID }}
       timeout-minutes: 10
     
-    # 5. 部署成功通知
+    # 4. 部署成功通知
     - name: 🎉 Deployment Success
       if: success()
       run: |
@@ -147,7 +136,7 @@ jobs:
         echo "🔗 Check your Netlify dashboard for the live URL!"
         echo "📱 Static version is now live and ready for users!"
     
-    # 6. 部署失败处理
+    # 5. 部署失败处理
     - name: 💥 Deployment Failed
       if: failure()
       run: |
