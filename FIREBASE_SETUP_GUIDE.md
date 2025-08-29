@@ -5,7 +5,7 @@
 本指南将帮助您完成智能升学助手项目的Firebase服务配置。
 
 **项目信息:**
-- 项目ID: `smart-college-cf2b1`
+- 项目ID: `test-base-a7c4b`
 - 应用ID: `1:445324851190:web:35ab87f493ec126265f9d7`
 
 ---
@@ -14,7 +14,7 @@
 
 ### 1. 访问Firebase控制台
 - 打开 [Firebase控制台](https://console.firebase.google.com)
-- 选择项目 `smart-college-cf2b1`
+- 选择项目 `test-base-a7c4b`
 
 ### 2. 启用必要的服务
 
@@ -88,7 +88,7 @@ service firebase.storage {
 ```
 localhost
 127.0.0.1
-smart-college-cf2b1.firebaseapp.com
+test-base-a7c4b.firebaseapp.com
 你的自定义域名 (如果有)
 ```
 
@@ -99,7 +99,7 @@ smart-college-cf2b1.firebaseapp.com
 ```
 http://localhost:8000/__/auth/handler
 http://127.0.0.1:8000/__/auth/handler  
-https://smart-college-cf2b1.firebaseapp.com/__/auth/handler
+https://test-base-a7c4b.firebaseapp.com/__/auth/handler
 ```
 
 ---

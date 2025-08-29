@@ -11,7 +11,7 @@
 ### 1. Google登录配置
 
 #### 在Firebase控制台中检查：
-1. 访问 [Firebase控制台](https://console.firebase.google.com/project/smart-college-cf2b1)
+1. 访问 [Firebase控制台](https://console.firebase.google.com/project/test-base-a7c4b)
 2. 进入 **Authentication** > **Sign-in method**
 3. 确保 **Google** 提供商已启用：
    - 点击 Google 提供商
@@ -29,7 +29,7 @@
 ### 2. 匿名登录配置
 
 #### 在Firebase控制台中启用：
-1. 访问 [Firebase控制台](https://console.firebase.google.com/project/smart-college-cf2b1)
+1. 访问 [Firebase控制台](https://console.firebase.google.com/project/test-base-a7c4b)
 2. 进入 **Authentication** > **Sign-in method**
 3. 找到 **匿名** 提供商
 4. 点击并设置为 **已启用**
@@ -37,12 +37,12 @@
 ### 3. 项目配置检查
 
 #### OAuth 2.0 客户端设置：
-1. 访问 [Google Cloud Console](https://console.cloud.google.com/apis/credentials?project=smart-college-cf2b1)
+1. 访问 [Google Cloud Console](https://console.cloud.google.com/apis/credentials?project=test-base-a7c4b)
 2. 检查OAuth 2.0客户端ID
 3. 确保已添加正确的重定向URI：
    - `http://localhost:8000`
    - `http://127.0.0.1:8000`
-   - `https://smart-college-cf2b1.firebaseapp.com`
+   - `https://test-base-a7c4b.firebaseapp.com`
 
 ### 4. 本地测试环境
 

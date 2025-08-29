@@ -6,8 +6,8 @@
 ## 🔍 已识别的问题
 
 ### 1. ✅ 存储桶域名错误 (已修复)
-**问题**: `storageBucket: "smart-college-cf2b1.firebasestorage.app"`  
-**修复**: 已更改为 `smart-college-cf2b1.appspot.com`
+**问题**: `storageBucket: "test-base-a7c4b.firebasestorage.app"`
+**修复**: 已更改为 `test-base-a7c4b.appspot.com`
 
 ### 2. 🔧 授权域名配置
 **需要检查**: Firebase控制台中的授权域名列表
@@ -19,23 +19,23 @@
 
 ### 步骤1: Firebase控制台配置
 1. 访问 [Firebase控制台](https://console.firebase.google.com)
-2. 选择项目 `smart-college-cf2b1`
+2. 选择项目 `test-base-a7c4b`
 3. 进入 **Authentication** → **Settings** → **Authorized domains**
 4. 确保包含以下域名：
    - `localhost`
    - `127.0.0.1`
-   - `smart-college-cf2b1.firebaseapp.com`
+   - `test-base-a7c4b.firebaseapp.com`
    - 您的自定义域名（如果有）
 
 ### 步骤2: Google Cloud Console配置
 1. 访问 [Google Cloud Console](https://console.cloud.google.com)
-2. 选择项目 `smart-college-cf2b1`
+2. 选择项目 `test-base-a7c4b`
 3. 进入 **APIs & Services** → **Credentials**
 4. 找到OAuth 2.0客户端ID
 5. 在"Authorized redirect URIs"中添加：
    - `http://localhost:8000/__/auth/handler`
    - `http://127.0.0.1:8000/__/auth/handler`
-   - `https://smart-college-cf2b1.firebaseapp.com/__/auth/handler`
+   - `https://test-base-a7c4b.firebaseapp.com/__/auth/handler`
 
 ### 步骤3: 启用Google登录
 1. Firebase控制台 → **Authentication** → **Sign-in method**

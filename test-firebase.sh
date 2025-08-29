@@ -13,7 +13,7 @@ if [ ! -f "index.html" ]; then
 fi
 
 echo "📋 项目信息:"
-echo "  项目ID: smart-college-cf2b1"
+echo "  项目ID: test-base-a7c4b"
 echo "  配置文件: config.js"
 echo "  测试页面: firebase-connection-test.html"
 
@@ -22,7 +22,7 @@ if [ -f "config.js" ]; then
     echo "✅ 配置文件存在"
     
     # 检查Firebase配置
-    if grep -q "smart-college-cf2b1" config.js; then
+    if grep -q "test-base-a7c4b" config.js; then
         echo "✅ Firebase项目ID配置正确"
     else
         echo "⚠️ Firebase项目ID可能有问题"
@@ -69,7 +69,7 @@ case $choice in
         ;;
     5)
         echo "🔗 打开Firebase控制台..."
-        open "https://console.firebase.google.com/project/smart-college-cf2b1"
+        open "https://console.firebase.google.com/project/test-base-a7c4b"
         ;;
     *)
         echo "❌ 无效选择"
@@ -79,7 +79,7 @@ esac
 
 echo ""
 echo "📚 有用的链接:"
-echo "  Firebase控制台: https://console.firebase.google.com/project/smart-college-cf2b1"
+echo "  Firebase控制台: https://console.firebase.google.com/project/test-base-a7c4b"
 echo "  配置指南: FIREBASE_SETUP_GUIDE.md"
 echo "  故障排除: FIREBASE_TROUBLESHOOTING.md"
 echo ""
