@@ -57,42 +57,42 @@ jobs:
         if [ ! -f "deploy/netlify.toml" ]; then
           echo "📝 Creating netlify.toml configuration..."
           cat > deploy/netlify.toml << 'EOF'
-[build]
-  publish = "."
-  command = "echo 'No build step required for static site'"
-
-# SPA路由重定向
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
-
-# 安全头设置
-[[headers]]
-  for = "/*"
-  [headers.values]
-    X-Frame-Options = "DENY"
-    X-XSS-Protection = "1; mode=block"
-    X-Content-Type-Options = "nosniff"
-    Referrer-Policy = "strict-origin-when-cross-origin"
-    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self'; font-src 'self' data:; object-src 'none'; base-uri 'self';"
-
-# 静态资源缓存
-[[headers]]
-  for = "/assets/*"
-  [headers.values]
-    Cache-Control = "public, max-age=31536000, immutable"
-
-[[headers]]
-  for = "/*.js"
-  [headers.values]
-    Cache-Control = "public, max-age=86400"
-
-[[headers]]
-  for = "/*.css"
-  [headers.values]
-    Cache-Control = "public, max-age=86400"
-EOF
+        [build]
+          publish = "."
+          command = "echo 'No build step required for static site'"
+        
+        # SPA路由重定向
+        [[redirects]]
+          from = "/*"
+          to = "/index.html"
+          status = 200
+        
+        # 安全头设置
+        [[headers]]
+          for = "/*"
+          [headers.values]
+            X-Frame-Options = "DENY"
+            X-XSS-Protection = "1; mode=block"
+            X-Content-Type-Options = "nosniff"
+            Referrer-Policy = "strict-origin-when-cross-origin"
+            Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self'; font-src 'self' data:; object-src 'none'; base-uri 'self';"
+        
+        # 静态资源缓存
+        [[headers]]
+          for = "/assets/*"
+          [headers.values]
+            Cache-Control = "public, max-age=31536000, immutable"
+        
+        [[headers]]
+          for = "/*.js"
+          [headers.values]
+            Cache-Control = "public, max-age=86400"
+        
+        [[headers]]
+          for = "/*.css"
+          [headers.values]
+            Cache-Control = "public, max-age=86400"
+        EOF
         fi
         
         # 创建_redirects文件（备用方案）
