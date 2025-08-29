@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block title %}首页 - Firebase登录系统{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="main-container p-5 text-center">
+            <h1 class="display-4 mb-4 text-primary">🔥 欢迎使用Firebase登录系统</h1>
+            <p class="lead mb-4">
+                这是一个使用Flask和Firebase构建的现代化用户认证系统。
+                支持Google账号登录，安全可靠。
+            </p>
+            
+            {% if current_user.is_authenticated %}
+                <div class="alert alert-success">
+                    <h5>🎉 您已成功登录！</h5>
+                    <p>欢迎回来，{{ current_user.display_name or current_user.email }}</p>
+                    <a href="{{ url_for('dashboard') }}" class="btn btn-primary btn-lg">
+                        进入控制台
+                    </a>
+                </div>
+            {% else %}
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h5 class="card-title">🚀 功能特性</h5>
+                                <ul class="list-unstyled text-start">
+                                    <li>✅ Google账号一键登录</li>
+                                    <li>✅ 安全的用户认证</li>
+                                    <li>✅ 响应式设计</li>
+                                    <li>✅ 现代化UI界面</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h5 class="card-title">🔐 开始使用</h5>
+                                <p class="card-text">点击下方按钮开始您的登录之旅</p>
+                                <div class="d-grid gap-2">
+                                    <a href="{{ url_for('login') }}" class="btn btn-google btn-lg">
+                                        <i class="fab fa-google me-2"></i>
+                                        立即登录
+                                    </a>
+                                    <a href="{{ url_for('register') }}" class="btn btn-outline-primary btn-lg">
+                                        <i class="fas fa-user-plus me-2"></i>
+                                        注册新账户
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

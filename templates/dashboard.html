@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+
+{% block title %}控制台 - Firebase登录系统{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <div class="main-container p-5">
+            <div class="text-center mb-5">
+                <h2 class="text-primary">🎉 欢迎来到控制台</h2>
+                <p class="text-muted">您已成功登录系统</p>
+            </div>
+            
+            <!-- 用户信息卡片 -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="card h-100">
+                        <div class="card-body text-center">
+                            <div class="mb-3">
+                                <i class="fas fa-user-circle fa-4x text-primary"></i>
+                            </div>
+                            <h5 class="card-title">用户信息</h5>
+                            <div class="text-start">
+                                <p><strong>用户ID:</strong> {{ user.id or '未知' }}</p>
+                                <p><strong>邮箱:</strong> {{ user.email or '未知' }}</p>
+                                <p><strong>显示名称:</strong> {{ user.display_name or '未设置' }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="card h-100">
+                        <div class="card-body text-center">
+                            <div class="mb-3">
+                                <i class="fas fa-shield-alt fa-4x text-success"></i>
+                            </div>
+                            <h5 class="card-title">账户状态</h5>
+                            <div class="text-start">
+                                <p><strong>登录状态:</strong> <span class="badge bg-success">已登录</span></p>
+                                <p><strong>认证方式:</strong> {{ '邮箱密码' if user.email and not user.display_name else 'Google账号' if user.display_name else '邮箱密码' }}</p>
+                                <p><strong>登录时间:</strong> 刚刚</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 功能区域 -->
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <div class="card text-center h-100">
+                        <div class="card-body">
+                            <i class="fas fa-cog fa-3x text-info mb-3"></i>
+                            <h5 class="card-title">账户设置</h5>
+                            <p class="card-text">管理您的账户信息和偏好设置</p>
+                            <button class="btn btn-outline-info" disabled>
+                                即将推出
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-4 mb-3">
+                    <div class="card text-center h-100">
+                        <div class="card-body">
+                            <i class="fas fa-history fa-3x text-warning mb-3"></i>
+                            <h5 class="card-title">登录历史</h5>
+                            <p class="card-text">查看您的登录记录和安全信息</p>
+                            <button class="btn btn-outline-warning" disabled>
+                                即将推出
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-4 mb-3">
+                    <div class="card text-center h-100">
+                        <div class="card-body">
+                            <i class="fas fa-bell fa-3x text-danger mb-3"></i>
+                            <h5 class="card-title">通知中心</h5>
+                            <p class="card-text">接收重要的系统通知和更新</p>
+                            <button class="btn btn-outline-danger" disabled>
+                                即将推出
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 操作按钮 -->
+            <div class="text-center mt-4">
+                <a href="{{ url_for('logout') }}" class="btn btn-danger btn-lg me-3">
+                    <i class="fas fa-sign-out-alt me-2"></i>
+                    退出登录
+                </a>
+                <a href="{{ url_for('index') }}" class="btn btn-outline-primary btn-lg">
+                    <i class="fas fa-home me-2"></i>
+                    返回首页
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

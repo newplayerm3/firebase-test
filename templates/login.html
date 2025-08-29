@@ -1,0 +1,225 @@
+{% extends "base.html" %}
+
+{% block title %}登录 - Firebase登录系统{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="main-container p-5">
+            <div class="text-center mb-4">
+                <h2 class="text-primary">🔐 用户登录</h2>
+                <p class="text-muted">使用您的Google账号快速登录</p>
+            </div>
+            
+            <div class="text-center">
+                <button id="googleLoginBtn" class="btn btn-google btn-lg mb-3">
+                    <i class="fab fa-google me-2"></i>
+                    使用Google账号登录
+                </button>
+                
+                <div class="text-center my-3">
+                    <span class="text-muted">或者</span>
+                </div>
+                
+                <!-- 邮箱密码登录表单 -->
+                <form id="emailLoginForm" class="text-start">
+                    <div class="mb-3">
+                        <label for="email" class="form-label">邮箱地址</label>
+                        <input type="email" class="form-control" id="email" name="email" placeholder="请输入您的邮箱地址" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="password" class="form-label">密码</label>
+                        <input type="password" class="form-control" id="password" name="password" placeholder="请输入密码" required>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="fas fa-sign-in-alt me-2"></i>
+                            邮箱密码登录
+                        </button>
+                    </div>
+                </form>
+                
+                <div id="loginStatus" class="mt-3" style="display: none;">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">登录中...</span>
+                    </div>
+                    <p class="mt-2">正在验证您的身份，请稍候...</p>
+                </div>
+                
+                <div id="loginError" class="alert alert-danger mt-3" style="display: none;">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <span id="errorMessage"></span>
+                </div>
+            </div>
+            
+            <div class="text-center mt-4">
+                <a href="{{ url_for('index') }}" class="text-muted">
+                    <i class="fas fa-arrow-left me-1"></i>
+                    返回首页
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const googleLoginBtn = document.getElementById('googleLoginBtn');
+    const emailLoginForm = document.getElementById('emailLoginForm');
+    const loginStatus = document.getElementById('loginStatus');
+    const loginError = document.getElementById('loginError');
+    const errorMessage = document.getElementById('errorMessage');
+    
+    // Google登录提供商
+    const googleProvider = new firebase.auth.GoogleAuthProvider();
+    
+    // 设置自定义参数
+    googleProvider.setCustomParameters({
+        prompt: 'select_account'
+    });
+    
+    // 添加语言设置
+    googleProvider.addScope('profile');
+    googleProvider.addScope('email');
+    
+    // Google登录
+    googleLoginBtn.addEventListener('click', function() {
+        // 显示登录状态
+        loginStatus.style.display = 'block';
+        loginError.style.display = 'none';
+        googleLoginBtn.disabled = true;
+        
+        // 执行Google登录 - 使用弹窗方式（更可靠）
+        firebase.auth().signInWithPopup(googleProvider)
+            .then(function(result) {
+                console.log('Google登录成功:', result.user.email);
+                
+                // 获取ID token
+                return result.user.getIdToken();
+            })
+            .then(function(idToken) {
+                console.log('获取到ID token，发送到后端验证');
+                
+                // 发送token到后端验证
+                return fetch('/verify-token', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        idToken: idToken
+                    })
+                });
+            })
+            .then(function(response) {
+                return response.json();
+            })
+            .then(function(data) {
+                if (data.success) {
+                    console.log('后端验证成功:', data.user);
+                    // 重定向到控制台
+                    window.location.href = '/dashboard';
+                } else {
+                    throw new Error(data.error || '验证失败');
+                }
+            })
+            .catch(function(error) {
+                console.error('Google登录错误:', error);
+                
+                // 显示错误信息
+                errorMessage.textContent = error.message || '登录过程中发生错误，请重试';
+                loginError.style.display = 'block';
+                
+                // 重置按钮状态
+                googleLoginBtn.disabled = false;
+            })
+            .finally(function() {
+                // 隐藏登录状态
+                loginStatus.style.display = 'none';
+            });
+    });
+    
+    // 邮箱密码登录
+    emailLoginForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const email = document.getElementById('email').value.trim();
+        const password = document.getElementById('password').value;
+        
+        if (!email || !password) {
+            showError('请填写邮箱和密码');
+            return;
+        }
+        
+        // 显示登录状态
+        showStatus();
+        
+        // 发送邮箱登录请求
+        fetch('/email-login', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                email: email,
+                password: password
+            })
+        })
+        .then(function(response) {
+            return response.json();
+        })
+        .then(function(data) {
+            if (data.success) {
+                console.log('邮箱登录成功:', data.user);
+                // 重定向到控制台
+                window.location.href = '/dashboard';
+            } else {
+                throw new Error(data.error || '登录失败');
+            }
+        })
+        .catch(function(error) {
+            console.error('邮箱登录错误:', error);
+            showError(error.message || '登录过程中发生错误，请重试');
+        })
+        .finally(function() {
+            hideStatus();
+        });
+    });
+    
+    function showStatus() {
+        loginStatus.style.display = 'block';
+        loginError.style.display = 'none';
+        googleLoginBtn.disabled = true;
+        emailLoginForm.querySelector('button[type="submit"]').disabled = true;
+    }
+    
+    function hideStatus() {
+        loginStatus.style.display = 'none';
+        googleLoginBtn.disabled = false;
+        emailLoginForm.querySelector('button[type="submit"]').disabled = false;
+    }
+    
+    function showError(message) {
+        errorMessage.textContent = message;
+        loginError.style.display = 'block';
+    }
+    
+    // 监听认证状态变化（简化版本）
+    firebase.auth().onAuthStateChanged(function(user) {
+        if (user) {
+            console.log('用户已通过Firebase认证:', user.email);
+        } else {
+            console.log('用户未登录');
+        }
+    });
+});
+</script>
+{% endblock %}

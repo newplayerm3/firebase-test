@@ -1,0 +1,186 @@
+{% extends "base.html" %}
+
+{% block title %}注册 - Firebase登录系统{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="main-container p-5">
+            <div class="text-center mb-4">
+                <h2 class="text-primary">📝 用户注册</h2>
+                <p class="text-muted">创建您的账户</p>
+            </div>
+            
+            <!-- 注册表单 -->
+            <form id="registerForm">
+                <div class="mb-3">
+                    <label for="displayName" class="form-label">显示名称</label>
+                    <input type="text" class="form-control" id="displayName" name="displayName" placeholder="请输入您的显示名称">
+                </div>
+                
+                <div class="mb-3">
+                    <label for="email" class="form-label">邮箱地址</label>
+                    <input type="email" class="form-control" id="email" name="email" placeholder="请输入您的邮箱地址" required>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="password" class="form-label">密码</label>
+                    <input type="password" class="form-control" id="password" name="password" placeholder="请输入密码（至少6位）" required>
+                    <div class="form-text">密码至少需要6个字符</div>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="confirmPassword" class="form-label">确认密码</label>
+                    <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" placeholder="请再次输入密码" required>
+                </div>
+                
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <i class="fas fa-user-plus me-2"></i>
+                        立即注册
+                    </button>
+                </div>
+            </form>
+            
+            <!-- 注册状态 -->
+            <div id="registerStatus" class="mt-3 text-center" style="display: none;">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">注册中...</span>
+                </div>
+                <p class="mt-2">正在创建您的账户，请稍候...</p>
+            </div>
+            
+            <!-- 错误信息 -->
+            <div id="registerError" class="alert alert-danger mt-3" style="display: none;">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                <span id="errorMessage"></span>
+            </div>
+            
+            <!-- 成功信息 -->
+            <div id="registerSuccess" class="alert alert-success mt-3" style="display: none;">
+                <i class="fas fa-check-circle me-2"></i>
+                <span>注册成功！正在跳转...</span>
+            </div>
+            
+            <!-- 其他选项 -->
+            <div class="text-center mt-4">
+                <p class="text-muted">已有账户？</p>
+                <a href="{{ url_for('login') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-sign-in-alt me-2"></i>
+                    立即登录
+                </a>
+            </div>
+            
+            <div class="text-center mt-3">
+                <a href="{{ url_for('index') }}" class="text-muted">
+                    <i class="fas fa-arrow-left me-1"></i>
+                    返回首页
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const registerForm = document.getElementById('registerForm');
+    const registerStatus = document.getElementById('registerStatus');
+    const registerError = document.getElementById('registerError');
+    const registerSuccess = document.getElementById('registerSuccess');
+    const errorMessage = document.getElementById('errorMessage');
+    
+    registerForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // 获取表单数据
+        const displayName = document.getElementById('displayName').value.trim();
+        const email = document.getElementById('email').value.trim();
+        const password = document.getElementById('password').value;
+        const confirmPassword = document.getElementById('confirmPassword').value;
+        
+        // 验证表单
+        if (!email || !password) {
+            showError('请填写所有必填字段');
+            return;
+        }
+        
+        if (password.length < 6) {
+            showError('密码至少需要6个字符');
+            return;
+        }
+        
+        if (password !== confirmPassword) {
+            showError('两次输入的密码不一致');
+            return;
+        }
+        
+        // 显示注册状态
+        showStatus();
+        
+        // 发送注册请求
+        fetch('/register', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                email: email,
+                password: password,
+                displayName: displayName
+            })
+        })
+        .then(function(response) {
+            return response.json();
+        })
+        .then(function(data) {
+            if (data.success) {
+                showSuccess();
+                // 延迟跳转到控制台
+                setTimeout(function() {
+                    window.location.href = '/dashboard';
+                }, 2000);
+            } else {
+                throw new Error(data.error || '注册失败');
+            }
+        })
+        .catch(function(error) {
+            console.error('注册错误:', error);
+            showError(error.message || '注册过程中发生错误，请重试');
+        })
+        .finally(function() {
+            hideStatus();
+        });
+    });
+    
+    function showStatus() {
+        registerStatus.style.display = 'block';
+        registerError.style.display = 'none';
+        registerSuccess.style.display = 'none';
+        registerForm.querySelector('button[type="submit"]').disabled = true;
+    }
+    
+    function hideStatus() {
+        registerStatus.style.display = 'none';
+        registerForm.querySelector('button[type="submit"]').disabled = false;
+    }
+    
+    function showError(message) {
+        errorMessage.textContent = message;
+        registerError.style.display = 'block';
+        registerSuccess.style.display = 'none';
+    }
+    
+    function showSuccess() {
+        registerError.style.display = 'none';
+        registerSuccess.style.display = 'block';
+    }
+});
+</script>
+{% endblock %}
+
