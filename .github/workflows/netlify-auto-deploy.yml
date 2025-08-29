@@ -91,36 +91,28 @@ jobs:
         echo "📁 Deploy directory contents:"
         ls -la deploy/
     
-    # 3. 部署到Netlify
-    - name: 🚀 Deploy to Netlify
-      uses: nwtgck/actions-netlify@v3.0
-      with:
-        # 部署目录
-        publish-dir: './deploy'
-        # 生产分支
-        production-branch: main
-        # GitHub Token
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        # 部署消息
-        deploy-message: |
-          🚀 Auto Deploy Smart College Advisor
-          🌿 Branch: ${{ github.ref_name }}
-          📝 Commit: ${{ github.sha }}
-          💬 Message: ${{ github.event.head_commit.message }}
-          ⏰ Time: ${{ github.event.head_commit.timestamp }}
-        # 启用状态检查
-        enable-commit-status: true
-        enable-pull-request-comment: true
-        overwrites-pull-request-comment: true
-        # 预览部署别名
-        alias: ${{ github.event.number && format('pr-{0}', github.event.number) || '' }}
-      env:
-        # 使用您提供的环境变量
-        NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_TOKEN }}
-        NETLIFY_SITE_ID: ${{ secrets.NETLIFY_PROJECT_ID }}
-      timeout-minutes: 10
+    # 3. 安装Netlify CLI
+    - name: 📦 Install Netlify CLI
+      run: npm install -g netlify-cli
     
-    # 4. 部署成功通知
+    # 4. 部署到Netlify
+    - name: 🚀 Deploy to Netlify
+      run: |
+        echo "🚀 Starting Netlify deployment..."
+        
+        # 设置Netlify认证
+        export NETLIFY_AUTH_TOKEN="${{ secrets.NETLIFY_TOKEN }}"
+        export NETLIFY_SITE_ID="${{ secrets.NETLIFY_PROJECT_ID }}"
+        
+        # 部署到Netlify
+        netlify deploy \
+          --dir=./deploy \
+          --prod \
+          --message="🚀 Auto Deploy Smart College Advisor - Branch: ${{ github.ref_name }} - Commit: ${{ github.sha }}"
+        
+        echo "✅ Deployment completed successfully!"
+    
+    # 5. 部署成功通知
     - name: 🎉 Deployment Success
       if: success()
       run: |
@@ -136,7 +128,7 @@ jobs:
         echo "🔗 Check your Netlify dashboard for the live URL!"
         echo "📱 Static version is now live and ready for users!"
     
-    # 5. 部署失败处理
+    # 6. 部署失败处理
     - name: 💥 Deployment Failed
       if: failure()
       run: |
