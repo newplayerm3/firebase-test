@@ -1,23 +1,24 @@
+# Netlify配置文件
+# 智能升学助手静态版本部署配置
+
 [build]
-  # 发布目录：当前目录
+  # 发布目录（根目录）
   publish = "."
-  # 不需要构建命令，这是纯静态项目
+  
+  # 构建命令（静态网站无需构建）
   command = "echo 'Static site - no build required'"
 
-# 构建环境设置
 [build.environment]
-  # 跳过依赖安装
-  SKIP_DEPENDENCY_INSTALL = "true"
-  # 跳过缓存
-  SKIP_CACHE = "true"
+  # Node.js版本
+  NODE_VERSION = "18"
 
-# SPA路由重定向
+# SPA路由重定向规则
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
 
-# 安全头设置
+# 安全头部设置
 [[headers]]
   for = "/*"
   [headers.values]
@@ -25,7 +26,7 @@
     X-XSS-Protection = "1; mode=block"
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
-    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self'; font-src 'self' data:; object-src 'none'; base-uri 'self';"
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:;"
 
 # 静态资源缓存
 [[headers]]
@@ -43,10 +44,14 @@
   [headers.values]
     Cache-Control = "public, max-age=86400"
 
-# 忽略文件
-[[ignore]]
-  # 忽略所有非静态文件
-  ignore = "*.md"
-  ignore = "*.bat"
-  ignore = "*.ps1"
-  ignore = "deploy/"
+# 错误页面
+[[redirects]]
+  from = "/404"
+  to = "/index.html"
+  status = 404
+
+# 性能优化
+[[headers]]
+  for = "/*.html"
+  [headers.values]
+    Cache-Control = "public, max-age=3600"
