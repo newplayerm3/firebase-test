@@ -18,20 +18,17 @@ class AIService {
         console.log('🔗 API URL:', this.apiUrl);
         console.log('🔑 API Key:', this.apiKey.substring(0, 15) + '...');
         
-        try {
-            const isAvailable = await this.checkAPIStatus();
-            if (isAvailable) {
-                console.log('✅ AI Service initialized successfully - 2brain API is ready');
-            } else {
-                console.warn('⚠️ AI Service initialized but API is not available');
-            }
-        } catch (error) {
-            console.error('❌ AI Service initialization failed:', error);
-        }
+        // 禁用自动API测试，改为手动检查模式
+        console.log('⚠️ 自动API测试已禁用，请手动点击"检查状态"按钮进行测试');
+        this.isAvailable = false;
+        this.updateAPIStatus('offline', '未测试');
+        console.log('✅ AI Service initialized in manual mode');
     }
     
-    // 检查API状态 - 参考Python示例
+    // 检查API状态 - 参考Python示例（手动调用模式）
     async checkAPIStatus() {
+        // 添加确认提示，防止意外调用
+        console.log('⚠️ 注意：即将进行2brain API测试请求');
         console.log('🔍 正在检查2brain API状态...');
         this.updateAPIStatus('checking', '检查中...');
         
@@ -106,11 +103,8 @@ class AIService {
         console.log('🔗 API端点:', this.apiUrl);
         
         if (!this.isAvailable) {
-            console.log('⚠️ API标记为不可用，重新检查状态...');
-            const available = await this.checkAPIStatus();
-            if (!available) {
-                throw new Error('AI服务不可用，2brain API连接失败');
-            }
+            console.log('⚠️ API标记为不可用，自动检查已禁用');
+            throw new Error('AI服务不可用，请先手动点击"检查状态"按钮测试API连接');
         }
         
         try {

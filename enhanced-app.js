@@ -65,9 +65,9 @@ function showNotificationMessage(message, type = 'info') {
 
 // Firebase认证函数 - 使用改进版本
 async function firebaseSignInWithGoogle() {
+    const loadingOverlay = showLoading('正在打开Google登录...');
+    
     try {
-        showNotificationMessage('正在打开Google登录...', 'info');
-        
         // 使用改进的Google登录函数
         if (window.improvedGoogleSignIn) {
             await window.improvedGoogleSignIn();
@@ -76,45 +76,64 @@ async function firebaseSignInWithGoogle() {
             await fallbackGoogleSignIn();
         }
         
+        hideLoading();
+        
     } catch (error) {
         console.error('Google登录失败:', error);
+        hideLoading();
         
         // 提供详细的错误信息和解决方案
         let errorMsg = '谷歌登录失败';
         let solution = '';
+        let icon = '❌';
         
         switch (error.code) {
             case 'auth/popup-closed-by-user':
-                errorMsg = '登录窗口被关闭';
-                solution = '请重新点击Google登录按钮';
+                errorMsg = '登录窗口被用户关闭';
+                solution = '请重新点击Google登录按钮继续';
+                icon = '🔄';
                 break;
             case 'auth/popup-blocked':
                 errorMsg = '浏览器阻止了登录弹窗';
-                solution = '请允许弹窗并重试，或使用邮箱密码登录';
+                solution = '请允许弹窗后重试，或使用邮箱密码登录';
+                icon = '🚫';
                 break;
             case 'auth/network-request-failed':
                 errorMsg = '网络连接失败';
                 solution = '请检查网络连接后重试';
+                icon = '🌐';
                 break;
             case 'auth/internal-error':
                 errorMsg = 'Firebase服务内部错误';
                 solution = '请刷新页面后重试，或使用邮箱密码登录';
+                icon = '⚠️';
                 break;
             default:
                 if (error.message.includes('CSP')) {
                     errorMsg = '安全策略限制';
                     solution = '请刷新页面，或使用邮箱密码登录';
+                    icon = '🛡️';
                 } else {
                     solution = '请尝试刷新页面或使用邮箱密码登录';
                 }
         }
         
-        showNotificationMessage(errorMsg, 'error');
+        // 显示错误提示
+        showNotification({
+            title: 'Google登录失败',
+            message: errorMsg,
+            type: 'error'
+        });
         
+        // 显示解决建议
         if (solution) {
             setTimeout(() => {
-                showNotificationMessage(`建议：${solution}`, 'info');
-            }, 2000);
+                showNotification({
+                    title: '建议解决方案',
+                    message: solution,
+                    type: 'info'
+                });
+            }, 1500);
         }
     }
 }
@@ -509,32 +528,57 @@ function showUserBookmarks() {
     showNotificationMessage('我的收藏功能开发中...', 'info');
 }
 
-function confirmLogout() {
+async function confirmLogout() {
     const dropdown = document.getElementById('userDropdown');
     if (dropdown) dropdown.classList.remove('show');
     
-    if (confirm('确定要退出登录吗？')) {
+    const confirmed = await showConfirm({
+        title: '退出登录',
+        message: '您确定要退出当前账户吗？退出后需要重新登录才能使用完整功能。',
+        icon: '🚪',
+        confirmText: '退出登录',
+        cancelText: '取消',
+        type: 'danger'
+    });
+    
+    if (confirmed) {
         handleLogout();
     }
 }
 
 async function handleLogout() {
+    const loadingOverlay = showLoading('正在退出登录...');
+    
     try {
-        showNotificationMessage('正在退出登录...', 'info');
-        
         if (firebase.auth) {
             await firebase.auth().signOut();
         }
         
         localStorage.removeItem('currentUser');
         localStorage.removeItem('rememberedEmail');
+        
+        // 短暂延迟以显示完成状态
+        await new Promise(resolve => setTimeout(resolve, 800));
+        
+        hideLoading();
         updateUserAvatar(null);
         showLogin();
-        showNotificationMessage('已成功退出登录', 'success');
+        
+        showNotification({
+            title: '退出成功',
+            message: '已安全退出登录，感谢使用！',
+            type: 'success'
+        });
         
     } catch (error) {
         console.error('退出登录失败:', error);
-        showNotificationMessage('退出登录失败，请重试', 'error');
+        hideLoading();
+        
+        showNotification({
+            title: '退出失败',
+            message: '退出登录时出现错误，请重试',
+            type: 'error'
+        });
     }
 }
 
@@ -802,19 +846,10 @@ function initializeEnhancedChat() {
                 aiService = new window.AIService();
                 console.log('🤖 AI Service initialized with API:', aiService.apiUrl);
                 
-                // 立即检查API状态
+                // 自动API状态检查已禁用 - 改为手动模式
                 setTimeout(() => {
-                    if (aiService) {
-                        aiService.checkAPIStatus().then(available => {
-                            if (available) {
-                                console.log('✅ 2brain API连接成功');
-                                showNotificationMessage('AI服务已就绪，支持流式对话', 'success');
-                            } else {
-                                console.warn('⚠️ 2brain API连接失败，将使用模拟模式');
-                                showNotificationMessage('AI API连接失败，使用模拟回复模式', 'warning');
-                            }
-                        });
-                    }
+                    console.log('🤖 AI服务已初始化，自动API测试已禁用');
+                    showNotificationMessage('AI服务已加载，请手动点击"检查状态"进行API测试', 'info');
                 }, 2000);
                 
             } else {
@@ -1003,11 +1038,8 @@ async function sendRealAIMessage(message) {
     }
     
     if (!aiService.isAvailable) {
-        console.log('⚠️ API标记为不可用，重新检查状态...');
-        const available = await aiService.checkAPIStatus();
-        if (!available) {
-            throw new Error('AI服务不可用，API连接失败');
-        }
+        console.log('⚠️ API标记为不可用，自动检查已禁用');
+        throw new Error('AI服务不可用，请手动点击"检查状态"按钮测试API连接');
     }
     
     // 创建流式消息元素
@@ -1220,27 +1252,69 @@ function addMessageToChat(role, content) {
     return messageDiv;
 }
 
-function clearChat() {
-    if (confirm('确定要清空所有对话记录吗？')) {
+async function clearChat() {
+    const confirmed = await showConfirm({
+        title: '清空聊天记录',
+        message: '确定要清空所有对话记录吗？此操作无法撤销，所有聊天历史将被永久删除。',
+        icon: '🗑️',
+        confirmText: '清空记录',
+        cancelText: '取消',
+        type: 'danger'
+    });
+    
+    if (confirmed) {
+        const loadingOverlay = showLoading('正在清空聊天记录...');
+        
+        // 短暂延迟以显示加载状态
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
         const chatMessages = document.getElementById('chatMessages');
         if (chatMessages) {
             chatMessages.innerHTML = `
                 <div class="message assistant-message">
                     <div class="message-avatar">🤖</div>
                     <div class="message-content">
-                        <div class="message-text">
-                            🎓 欢迎使用智能升学助手！<br><br>
-                            您好！我是您的AI升学顾问，很高兴为您服务！👋<br><br>
-                            请告诉我您的具体需求，或选择下方的快速咨询选项开始对话。
+                        <div class="message-text markdown-content">
+                            <h3>🎓 欢迎使用智能升学助手！</h3>
+                            <p>您好！我是您的专业AI升学顾问，很高兴为您服务！👋</p>
+                            
+                            <h4>💫 我能为您提供的服务：</h4>
+                            <ul>
+                                <li><strong>🎯 专业选择咨询</strong> - 根据您的兴趣和能力推荐最适合的专业</li>
+                                <li><strong>🏫 大学推荐</strong> - 为您匹配合适的院校和项目</li>
+                                <li><strong>📚 学习规划</strong> - 制定个性化的学习计划和时间安排</li>
+                                <li><strong>📝 申请材料指导</strong> - 协助准备申请文书、简历等材料</li>
+                            </ul>
+                            
+                            <blockquote>
+                                💡 <strong>智能格式化回答</strong>：我现在支持<mark>高亮重点</mark>、**粗体强调**、*斜体文本*等多种格式！
+                            </blockquote>
+                            
+                            <p><strong>请告诉我您的具体需求，或选择下方的快速咨询选项开始对话。</strong></p>
+                            <p><em>让我们一起规划您的升学之路！</em> 🚀</p>
                         </div>
+                        <div class="message-time">${new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}</div>
                     </div>
                 </div>
             `;
         }
         
+        // 清空AI服务的对话历史
+        if (aiService && aiService.clearHistory) {
+            aiService.clearHistory();
+        }
+        
         chatHistory = [];
         messageCount = 0;
         updateChatStats();
+        
+        hideLoading();
+        
+        showNotification({
+            title: '清空成功',
+            message: '聊天记录已清空，您可以开始新的对话了！',
+            type: 'success'
+        });
     }
 }
 
@@ -1289,22 +1363,58 @@ function saveChatHistory() {
 }
 
 async function checkAPIStatus() {
+    // 显示确认弹窗
+    const confirmed = await showConfirm({
+        title: 'API连接测试',
+        message: '即将测试2brain AI API连接状态，这会发送一个测试请求到服务器。是否继续？',
+        icon: '🔍',
+        confirmText: '开始测试',
+        cancelText: '取消',
+        type: 'primary'
+    });
+    
+    if (!confirmed) {
+        return;
+    }
+    
     try {
         updateAPIStatus('checking', '检查中...');
+        const loadingOverlay = showLoading('正在测试API连接...');
         
         if (aiService) {
             const isAvailable = await aiService.checkAPIStatus();
+            hideLoading();
+            
             if (isAvailable) {
-                showNotificationMessage('AI服务连接正常！', 'success');
+                showNotification({
+                    title: 'API连接成功',
+                    message: '2brain AI API连接正常，可以开始使用AI对话功能！',
+                    type: 'success'
+                });
             } else {
-                showNotificationMessage('AI服务连接失败，请检查网络', 'error');
+                showNotification({
+                    title: 'API连接失败',
+                    message: '无法连接到2brain AI API，请检查网络连接或稍后重试',
+                    type: 'error'
+                });
             }
         } else {
-            showNotificationMessage('AI服务未初始化', 'warning');
+            hideLoading();
+            showNotification({
+                title: 'AI服务未初始化',
+                message: '请刷新页面重新加载AI服务',
+                type: 'warning'
+            });
         }
     } catch (error) {
         console.error('API status check failed:', error);
-        showNotificationMessage('API状态检查失败', 'error');
+        hideLoading();
+        
+        showNotification({
+            title: 'API测试失败',
+            message: `连接测试过程中出现错误: ${error.message}`,
+            type: 'error'
+        });
     }
 }
 
