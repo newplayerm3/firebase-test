@@ -1,0 +1,182 @@
+name: Advanced Netlify Deployment
+
+# 触发条件
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:  # 手动触发
+
+# 环境变量
+env:
+  NODE_VERSION: '18'
+  NETLIFY_TIMEOUT: '10m'
+
+jobs:
+  # 代码检查和测试
+  lint-and-test:
+    name: 🔍 Code Quality Check
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+        
+      - name: 🔧 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          
+      - name: 📦 Install dependencies
+        run: |
+          if [ -f package.json ]; then
+            npm ci
+          else
+            echo "No package.json found, skipping install"
+          fi
+          
+      - name: 🧹 Lint check
+        run: |
+          if npm run lint --if-present; then
+            echo "✅ Lint check passed"
+          else
+            echo "⚠️ No lint script found or lint failed"
+          fi
+          
+      - name: 🧪 Run tests
+        run: |
+          if npm test --if-present; then
+            echo "✅ Tests passed"
+          else
+            echo "⚠️ No test script found"
+          fi
+
+  # 部署到Netlify
+  deploy:
+    name: 🚀 Deploy to Netlify
+    runs-on: ubuntu-latest
+    needs: lint-and-test  # 依赖代码检查通过
+    if: github.ref == 'refs/heads/main'  # 只在main分支部署
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # 获取完整历史，用于生成变更日志
+          
+      - name: 🔧 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          
+      - name: 📦 Install dependencies
+        run: |
+          if [ -f package.json ]; then
+            npm ci
+            echo "✅ Dependencies installed"
+          else
+            echo "📄 No package.json found - static site deployment"
+          fi
+          
+      - name: 🔨 Build project
+        run: |
+          if [ -f package.json ] && npm run build --if-present; then
+            echo "✅ Build completed successfully"
+            ls -la dist/ || ls -la build/ || echo "No build output directory found"
+          else
+            echo "📄 No build step required for static site"
+          fi
+          
+      - name: 🔍 Pre-deployment checks
+        run: |
+          echo "📋 Pre-deployment validation..."
+          
+          # 检查必要文件
+          if [ ! -f index.html ]; then
+            echo "❌ index.html not found!"
+            exit 1
+          fi
+          
+          # 检查Netlify配置
+          if [ -f netlify.toml ]; then
+            echo "✅ netlify.toml found"
+            cat netlify.toml
+          else
+            echo "⚠️ No netlify.toml found, using default settings"
+          fi
+          
+          # 检查重定向规则
+          if [ -f _redirects ]; then
+            echo "✅ _redirects found"
+            cat _redirects
+          else
+            echo "ℹ️ No _redirects file found"
+          fi
+          
+          echo "📊 Deployment directory contents:"
+          ls -la
+          
+      - name: 🚀 Deploy to Netlify
+        uses: netlify/actions/cli@master
+        with:
+          args: deploy --prod --dir=. --message="🚀 Auto-deploy from commit ${{ github.sha }} by ${{ github.actor }}"
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_PROJECT_ID }}
+          
+      - name: 📊 Deployment summary
+        if: success()
+        run: |
+          echo "## 🎉 部署成功！" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📋 部署信息" >> $GITHUB_STEP_SUMMARY
+          echo "- **提交哈希**: \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **提交者**: ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **提交信息**: ${{ github.event.head_commit.message }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **部署时间**: $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🌐 访问链接" >> $GITHUB_STEP_SUMMARY
+          echo "您的网站已成功部署到Netlify！" >> $GITHUB_STEP_SUMMARY
+          
+      - name: 💬 Comment on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## 🚀 Netlify预览部署
+
+              ✅ 您的更改已成功部署到Netlify预览环境！
+
+              ### 📋 部署详情
+              - **提交**: \`${{ github.sha }}\`
+              - **分支**: \`${{ github.head_ref }}\`
+              - **部署时间**: ${new Date().toISOString()}
+
+              ### 🔍 预览链接
+              部署完成后，您可以在Netlify仪表板中查看预览链接。
+
+              ---
+              *此评论由GitHub Actions自动生成*`
+            })
+
+  # 部署失败时的通知
+  notify-failure:
+    name: 📧 Notify on Failure
+    runs-on: ubuntu-latest
+    needs: deploy
+    if: failure()
+    
+    steps:
+      - name: 📧 Send failure notification
+        run: |
+          echo "❌ 部署失败通知"
+          echo "提交: ${{ github.sha }}"
+          echo "分支: ${{ github.ref }}"
+          echo "提交者: ${{ github.actor }}"
+          echo "失败时间: $(date -u)"

@@ -1,0 +1,1195 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: https:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https: data:; style-src 'self' 'unsafe-inline' https: data:; img-src 'self' data: blob: https:; font-src 'self' data: https:; connect-src 'self' https:; frame-src 'self' https:; object-src 'none'; base-uri 'self';">
+    <meta http-equiv="Cross-Origin-Opener-Policy" content="same-origin-allow-popups">
+    <meta http-equiv="Cross-Origin-Embedder-Policy" content="unsafe-none">
+    <title>Smart College Advisor - AI-Powered University Application Platform</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="enhanced-styles.css">
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics-compat.js"></script>
+    
+    <!-- Firebase简化初始化 -->
+    <script src="firebase-simple.js"></script>
+    
+    <!-- AI服务 -->
+    <script src="ai-service.js"></script>
+    
+    <!-- Markdown解析库 -->
+    <script src="https://cdn.jsdelivr.net/npm/marked@9.1.6/marked.min.js"></script>
+    <!-- 代码高亮库 -->
+    <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-core.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism-tomorrow.min.css">
+</head>
+<body>
+    <!-- Login Interface -->
+    <div id="loginContainer" class="login-container">
+        <div class="login-card">
+            <div class="login-logo-container">
+                <div class="login-logo-icon">🎓</div>
+                <div class="login-title">智能升学助手 - AI驱动的升学规划平台</div>
+            </div>
+            <div class="login-subtitle">专业的升学指导，助您实现理想大学的梦想</div>
+            
+            <!-- Login/Register Toggle -->
+            <div class="auth-toggle">
+                <button type="button" class="toggle-btn active" id="loginToggle" onclick="showLoginForm()">登录</button>
+                <button type="button" class="toggle-btn" id="registerToggle" onclick="showRegisterForm()">注册</button>
+            </div>
+
+            <!-- Login Form -->
+            <form class="auth-form" id="loginForm" style="display: block;">
+                <div class="form-group">
+                    <label class="form-label">📧 邮箱地址</label>
+                    <input type="email" class="form-input" id="loginEmail" placeholder="请输入邮箱地址" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">🔒 密码</label>
+                    <input type="password" class="form-input" id="loginPassword" placeholder="请输入密码" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="login-remember">
+                        <input type="checkbox" id="rememberMe" class="remember-checkbox">
+                        <span class="remember-text">记住我</span>
+                    </label>
+                </div>
+                
+                <div class="login-options">
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">
+                        🔐 登录
+                    </button>
+                    
+                    <button type="button" class="btn btn-google" style="width: 100%;" onclick="firebaseSignInWithGoogle()">
+                        🌐 Google登录
+                    </button>
+                    
+                    <button type="button" class="btn btn-guest" style="width: 100%;" onclick="firebaseSignInAnonymously()">
+                        👤 访客模式
+                    </button>
+                </div>
+            </form>
+
+            <!-- Register Form -->
+            <form class="auth-form" id="registerForm" style="display: none;">
+                <div class="form-group">
+                    <label class="form-label">👤 用户名</label>
+                    <input type="text" class="form-input" id="registerName" placeholder="请输入用户名" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">📧 邮箱地址</label>
+                    <input type="email" class="form-input" id="registerEmail" placeholder="请输入邮箱地址" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">🔒 密码</label>
+                    <input type="password" class="form-input" id="registerPassword" placeholder="请输入密码（至少6位）" required minlength="6">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">🔒 确认密码</label>
+                    <input type="password" class="form-input" id="confirmPassword" placeholder="请再次输入密码" required minlength="6">
+                </div>
+                
+                <div class="login-options">
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">
+                        ✨ 注册账户
+                    </button>
+                    
+                    <button type="button" class="btn btn-google" style="width: 100%;" onclick="firebaseSignInWithGoogle()">
+                        🌐 Google注册
+                    </button>
+                </div>
+            </form>
+            
+            <div class="warning">
+                ⚠️ 访客模式功能受限，建议登录以获得完整体验
+            </div>
+        </div>
+    </div>
+
+    <!-- Career Selection Interface -->
+    <div id="careerContainer" class="career-container">
+        <div class="career-card">
+            <div class="career-header">
+                <img src="assets/images/logo2.png" alt="Smart College Advisor" style="width: 80px; height: 80px; margin: 0 auto 20px auto; display: block;">
+                <div class="career-title">Smart College Advisor - 选择您的职业方向</div>
+                <div class="career-subtitle">请选择您最感兴趣的职业领域，我们将为您提供相关的升学建议</div>
+            </div>
+            
+            <div class="career-options">
+                <div class="career-option" onclick="selectCareer('engineering')">
+                    <div class="career-icon">⚙️</div>
+                    <h3>工程与技术</h3>
+                    <p>机械、电子、计算机、建筑等工程技术类专业</p>
+                </div>
+                
+                <div class="career-option" onclick="selectCareer('medical')">
+                    <div class="career-icon">🏥</div>
+                    <h3>医学与健康</h3>
+                    <p>临床医学、护理、药学、公共卫生等医学类专业</p>
+                </div>
+                
+                <div class="career-option" onclick="selectCareer('business')">
+                    <div class="career-icon">💼</div>
+                    <h3>商业与管理</h3>
+                    <p>工商管理、金融、会计、市场营销等商科专业</p>
+                </div>
+                
+                <div class="career-option" onclick="selectCareer('arts')">
+                    <div class="career-icon">🎨</div>
+                    <h3>艺术与设计</h3>
+                    <p>视觉设计、音乐、舞蹈、戏剧等艺术类专业</p>
+                </div>
+                
+                <div class="career-option" onclick="selectCareer('education')">
+                    <div class="career-icon">📚</div>
+                    <h3>教育与教学</h3>
+                    <p>教育学、心理学、学科教学等教育类专业</p>
+                </div>
+                
+                <div class="career-option" onclick="selectCareer('science')">
+                    <div class="career-icon">🔬</div>
+                    <h3>自然科学</h3>
+                    <p>数学、物理、化学、生物等基础科学专业</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Interface -->
+    <div id="mainContainer" class="main-container">
+        <header class="header">
+            <nav class="nav-container">
+                <div class="logo">
+                    <img src="assets/images/logo2.png" alt="Smart College Advisor">
+                    <span>Smart College Advisor</span>
+                </div>
+                
+                <div class="nav-menu">
+                    <a href="#" class="nav-item" onclick="showFeature('ai')">🤖 AI助手</a>
+                    <a href="#" class="nav-item" onclick="showFeature('question')">📚 智能题库</a>
+                    <a href="#" class="nav-item" onclick="showFeature('strategy')">📊 申请策略</a>
+                    <a href="#" class="nav-item" onclick="showFeature('resource')">📖 学习资源</a>
+                    <a href="#" class="nav-item" onclick="showFeature('community')">👥 学习社区</a>
+                    <a href="#" class="nav-item" onclick="showFeature('announcement')">📢 院校公告</a>
+                    <a href="#" class="nav-item" onclick="showFeature('about')">ℹ️ 关于本站</a>
+                </div>
+                
+                <button class="donation-nav-btn" onclick="window.stripeService?.showDonationModal()">
+                    💝 捐赠
+                </button>
+                
+                <button class="settings-btn" onclick="showSettings()">
+                    ⚙️ 设置
+                </button>
+
+                <!-- User Menu -->
+                <div class="user-menu">
+                    <div class="user-avatar" id="userAvatar" onclick="toggleUserDropdown()">
+                        <span id="userInitials">U</span>
+                    </div>
+                    <div class="user-dropdown" id="userDropdown">
+                        <div class="dropdown-item" onclick="showUserProfile()">
+                            👤 个人资料
+                        </div>
+                        <div class="dropdown-item" onclick="showUserSettings()">
+                            ⚙️ 账户设置
+                        </div>
+                        <div class="dropdown-item" onclick="showUserProgress()">
+                            📊 学习进度
+                        </div>
+                        <div class="dropdown-item" onclick="showUserBookmarks()">
+                            ⭐ 我的收藏
+                        </div>
+                        <div class="dropdown-item logout" onclick="confirmLogout()">
+                            🚪 退出登录
+                        </div>
+                    </div>
+                </div>
+            </nav>
+        </header>
+        
+        <main class="hero-section">
+            <div class="hero-content">
+                <div class="hero-header">
+                    <h1 class="hero-title">Smart College Advisor</h1>
+                    <p class="hero-subtitle">
+                        AI驱动的个性化升学规划平台<br>
+                        助您实现理想大学的梦想
+                    </p>
+                    <div class="hero-badges">
+                        <span class="hero-badge">🤖 AI智能</span>
+                        <span class="hero-badge">🎯 精准规划</span>
+                        <span class="hero-badge">🚀 快速提升</span>
+                        <span class="hero-badge">🌟 专业指导</span>
+                    </div>
+                </div>
+                
+                <!-- Search Box -->
+                <div class="search-container">
+                    <input type="text" class="search-box" placeholder="🔍 搜索大学、专业、课程..." id="searchBox">
+                    <div class="search-icon">🔍</div>
+                </div>
+                <p style="color: rgba(255, 255, 255, 0.8); font-size: 14px; margin-top: 10px; text-align: center;">
+                    💡 提示：输入关键词如"计算机科学"、"清华大学"、"SAT数学"等
+                </p>
+                
+                <!-- Statistics -->
+                <div class="stats-container">
+                    <div class="stat-card">
+                        <div class="stat-number">50万+</div>
+                        <div class="stat-label">注册用户</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">3</div>
+                        <div class="stat-label">合作大学</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">98%</div>
+                        <div class="stat-label">用户满意度</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">100万+</div>
+                        <div class="stat-label">题库资源</div>
+                    </div>
+                </div>
+                
+                <!-- Partner Universities -->
+                <div class="universities-container">
+                    <h3 style="color: white; text-align: center; margin-bottom: 20px; font-size: 1.5rem;">
+                        🌍 顶级全球合作大学
+                    </h3>
+                    <div class="universities-grid">
+                        <div class="university-card" onclick="showUniversityInfo('auckland')">
+                            <div class="university-flag">🇳🇿</div>
+                            <div class="university-name">奥克兰大学</div>
+                            <div class="university-desc">新西兰排名第一的大学</div>
+                        </div>
+                        <div class="university-card" onclick="showUniversityInfo('harvard')">
+                            <div class="university-flag">🇺🇸</div>
+                            <div class="university-name">哈佛大学</div>
+                            <div class="university-desc">世界顶级私立研究型大学</div>
+                        </div>
+                        <div class="university-card" onclick="showUniversityInfo('cambridge')">
+                            <div class="university-flag">🇬🇧</div>
+                            <div class="university-name">剑桥大学</div>
+                            <div class="university-desc">英国最古老的大学</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Quick Actions -->
+                <div class="quick-actions">
+                    <a href="#" class="quick-action-btn" onclick="showFeature('ai')">🤖 开始AI咨询</a>
+                    <a href="#" class="quick-action-btn" onclick="showFeature('question')">📚 练习题目</a>
+                    <a href="#" class="quick-action-btn" onclick="showFeature('strategy')">📊 申请分析</a>
+                    <a href="#" class="quick-action-btn" onclick="showFeature('resource')">📖 学习资源</a>
+                </div>
+                
+                <!-- Donation Section -->
+                <div class="donation-section">
+                    <div class="donation-card">
+                        <div class="donation-icon">💝</div>
+                        <h3>支持我们的使命</h3>
+                        <p>帮助我们继续为全球学生提供免费的AI驱动升学规划服务。</p>
+                        <button class="donation-btn" onclick="window.stripeService?.showDonationModal()">
+                            💝 进行捐赠
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="hero-features">
+                    <div class="feature-card">
+                        <div class="feature-icon">🤖</div>
+                        <div class="feature-title">AI智能咨询</div>
+                        <div class="feature-desc">
+                            基于AI的专业选择建议和升学规划指导，提供个性化的学习路径和职业发展建议
+                        </div>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">📊</div>
+                        <div class="feature-title">数据分析</div>
+                        <div class="feature-desc">
+                            历年录取数据分析和趋势预测服务，帮助您做出明智的申请决策
+                        </div>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">🎯</div>
+                        <div class="feature-title">精准定位</div>
+                        <div class="feature-desc">
+                            根据您的成绩和兴趣精准推荐大学和专业，提高录取成功率
+                        </div>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">📚</div>
+                        <div class="feature-title">学习资源</div>
+                        <div class="feature-desc">
+                            丰富的题库资源和学习指导服务，涵盖各学科重点难点内容
+                        </div>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">🚀</div>
+                        <div class="feature-title">升学规划</div>
+                        <div class="feature-desc">
+                            制定个性化的学习计划和备考策略，帮助您高效备考提升成绩
+                        </div>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">💡</div>
+                        <div class="feature-title">智能推荐</div>
+                        <div class="feature-desc">
+                            基于大数据分析的大学和专业智能推荐，为您匹配最佳选择
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+        
+        <!-- Right Side Notification Banner -->
+        <div class="notification-sidebar" id="notificationSidebar">
+            <div class="notification-card">
+                <div class="notification-header">
+                    <div class="notification-icon">🎉</div>
+                    <div class="notification-title">欢迎</div>
+                </div>
+                <div class="notification-content">
+                    欢迎来到Smart College Advisor！新用户可享受7天免费AI咨询服务
+                </div>
+                <button class="notification-close" onclick="closeNotificationSidebar()">×</button>
+            </div>
+            
+            <div class="notification-card">
+                <div class="notification-header">
+                    <div class="notification-icon">🚀</div>
+                    <div class="notification-title">新功能</div>
+                </div>
+                <div class="notification-content">
+                    AI智能助手全面升级，为您提供更精准的升学指导！
+                </div>
+            </div>
+            
+            <div class="notification-card">
+                <div class="notification-header">
+                    <div class="notification-icon">🎯</div>
+                    <div class="notification-title">热门活动</div>
+                </div>
+                <div class="notification-content">
+                    春季升学规划讲座即将开始，名额有限，立即报名！
+                </div>
+            </div>
+        </div>
+
+        <!-- AI Assistant Feature Module -->
+        <div id="aiFeature" class="feature-content">
+            <button class="back-btn" onclick="hideFeature()">← 返回主页</button>
+            
+            <!-- AI助手头部区域 -->
+            <div class="ai-header-section">
+                <div class="ai-title-area">
+                    <div class="ai-avatar">🤖</div>
+                    <div class="ai-title-text">
+                        <h2>AI智能升学助手</h2>
+                        <p>专业的AI升学顾问，为您提供个性化的升学指导和建议</p>
+                    </div>
+                </div>
+                
+                <div class="ai-status-area">
+                    <div class="status-indicator" id="statusIndicator">
+                        <span class="status-dot" id="statusDot"></span>
+                        <span class="status-text" id="statusText">检查中...</span>
+                    </div>
+                    <div class="chat-controls">
+                        <button class="btn btn-secondary btn-sm" onclick="clearChat()">🗑️ 清空</button>
+                        <button class="btn btn-secondary btn-sm" onclick="exportChat()">💾 导出</button>
+                        <button class="btn btn-primary btn-sm" onclick="checkAPIStatus()">🔍 检查状态</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 聊天配置面板 -->
+            <div class="chat-config-panel">
+                <div class="config-group">
+                    <label class="config-label">🌐 回答语言</label>
+                    <select id="languageSelect" class="config-select" onchange="changeLanguage()">
+                        <option value="zh-CN">🇨🇳 中文简体</option>
+                        <option value="en-GB">🇬🇧 English (UK)</option>
+                    </select>
+                </div>
+                
+                <div class="config-toggles">
+                    <label class="option-toggle">
+                        <input type="checkbox" id="detailedMode" checked onchange="updateChatMode()">
+                        <span class="toggle-text">📋 详细回答</span>
+                    </label>
+                    <label class="option-toggle">
+                        <input type="checkbox" id="contextMode" checked onchange="updateChatMode()">
+                        <span class="toggle-text">🧠 记住对话</span>
+                    </label>
+                    <label class="option-toggle">
+                        <input type="checkbox" id="streamMode" checked onchange="updateChatMode()">
+                        <span class="toggle-text">⚡ 流式输出</span>
+                    </label>
+                </div>
+            </div>
+            
+            <!-- AI聊天界面 -->
+            <div class="ai-chat-main">
+                <div class="chat-messages-container">
+                    <div class="chat-messages" id="chatMessages">
+                        <div class="message assistant-message">
+                            <div class="message-avatar">🤖</div>
+                            <div class="message-content">
+                                <div class="message-text markdown-content">
+                                    <h3>🎓 欢迎使用智能升学助手！</h3>
+                                    <p>您好！我是您的专业AI升学顾问，很高兴为您服务！👋</p>
+                                    
+                                    <h4>💫 我能为您提供的服务：</h4>
+                                    <ul>
+                                        <li><strong>🎯 专业选择咨询</strong> - 根据您的兴趣和能力推荐最适合的专业</li>
+                                        <li><strong>🏫 大学推荐</strong> - 为您匹配合适的院校和项目</li>
+                                        <li><strong>📚 学习规划</strong> - 制定个性化的学习计划和时间安排</li>
+                                        <li><strong>📝 申请材料指导</strong> - 协助准备申请文书、简历等材料</li>
+                                    </ul>
+                                    
+                                    <blockquote>
+                                        💡 <strong>智能格式化回答</strong>：我现在支持<mark>高亮重点</mark>、**粗体强调**、*斜体文本*等多种格式！
+                                    </blockquote>
+                                    
+                                    <p><strong>请告诉我您的具体需求，或选择下方的快速咨询选项开始对话。</strong></p>
+                                    <p><em>让我们一起规划您的升学之路！</em> 🚀</p>
+                                </div>
+                                <div class="message-time">${new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 输入区域 -->
+                <div class="chat-input-section">
+                    <div class="typing-indicator" id="typingIndicator" style="display: none;">
+                        <div class="typing-avatar">🤖</div>
+                        <div class="typing-content">
+                            <span>AI正在思考中</span>
+                            <div class="typing-dots">
+                                <span></span><span></span><span></span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="input-area">
+                        <div class="input-wrapper">
+                            <textarea 
+                                id="chatInput" 
+                                class="chat-input" 
+                                placeholder="请输入您的升学问题，我会为您提供专业的建议..."
+                                rows="2"
+                                onkeypress="handleChatKeyPress(event)"
+                                oninput="handleInputChange()"
+                            ></textarea>
+                            
+                            <div class="input-controls">
+                                <button class="control-btn" onclick="insertTemplate()" title="插入模板">📝</button>
+                                <button class="control-btn" onclick="uploadFile()" title="上传文件">📎</button>
+                                <button class="send-btn" onclick="sendMessage()" id="sendBtn" disabled>
+                                    <span class="send-text">发送</span>
+                                    <span class="send-icon">📤</span>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="input-info">
+                            <div class="chat-stats">
+                                <span id="messageCount">消息: 0</span>
+                                <span id="tokenCount">字符: 0</span>
+                                <span id="chatMode">模式: 智能咨询</span>
+                                <span id="apiStatus">API: 连接中</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 快速咨询选项 -->
+            <div class="quick-consultation-section">
+                <h3>🚀 快速咨询模板</h3>
+                <div class="consultation-categories">
+                    <div class="category-section">
+                        <h4>🎓 专业选择</h4>
+                        <div class="quick-options">
+                            <button class="quick-option-btn" onclick="askQuickQuestion('我想了解计算机科学专业的就业前景和发展方向，包括薪资待遇、工作环境、职业发展路径等。')">
+                                💻 计算机科学专业
+                            </button>
+                            <button class="quick-option-btn" onclick="askQuickQuestion('我对医学专业很感兴趣，请介绍医学专业的学习内容、申请要求和未来就业方向。')">
+                                🏥 医学专业咨询
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="category-section">
+                        <h4>🏫 大学申请</h4>
+                        <div class="quick-options">
+                            <button class="quick-option-btn" onclick="askQuickQuestion('如何根据我的成绩和兴趣选择合适的大学？请提供详细的选择策略和评估方法。')">
+                                🏫 大学选择指导
+                            </button>
+                            <button class="quick-option-btn" onclick="askQuickQuestion('我的GPA不够理想，有什么具体的提升策略？请制定详细的改进计划。')">
+                                📊 成绩提升方案
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="category-section">
+                        <h4>📝 申请文书</h4>
+                        <div class="quick-options">
+                            <button class="quick-option-btn" onclick="askQuickQuestion('如何写一份优秀的个人陈述和申请文书？请提供写作框架、技巧和注意事项。')">
+                                📝 申请文书指导
+                            </button>
+                            <button class="quick-option-btn" onclick="askQuickQuestion('申请奖学金需要什么条件和材料？请详细介绍申请流程和成功策略。')">
+                                💰 奖学金申请
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Question Bank Feature Module -->
+        <div id="questionFeature" class="feature-content">
+            <button class="back-btn" onclick="hideFeature()">← 返回主页</button>
+            <div class="feature-header">
+                <h2>📚 智能题库</h2>
+                <p>海量优质题目资源，涵盖各学科重点难点，助您高效备考</p>
+                <div class="header-actions">
+                    <button class="btn-secondary" onclick="showQuizMode()">🎯 测验模式</button>
+                    <button class="btn-secondary" onclick="showProgress()">📊 我的进度</button>
+                    <button class="btn-primary" onclick="startRandomQuiz()">🎲 随机测验</button>
+                </div>
+            </div>
+            
+            <!-- Filter and Search Bar -->
+            <div class="question-filters">
+                <div class="filter-group">
+                    <label>学科:</label>
+                    <select id="subjectFilter" onchange="filterQuestions()">
+                        <option value="">所有学科</option>
+                        <option value="math">🧮 数学</option>
+                        <option value="english">📖 英语</option>
+                        <option value="science">🔬 科学</option>
+                        <option value="history">📜 历史</option>
+                        <option value="geography">🌍 地理</option>
+                        <option value="physics">⚛️ 物理</option>
+                        <option value="chemistry">🧪 化学</option>
+                        <option value="biology">🧬 生物</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>难度:</label>
+                    <select id="difficultyFilter" onchange="filterQuestions()">
+                        <option value="">所有难度</option>
+                        <option value="easy">🟢 简单</option>
+                        <option value="medium">🟡 中等</option>
+                        <option value="hard">🔴 困难</option>
+                        <option value="expert">🟣 专家</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>类型:</label>
+                    <select id="typeFilter" onchange="filterQuestions()">
+                        <option value="">所有类型</option>
+                        <option value="multiple">选择题</option>
+                        <option value="essay">论述题</option>
+                        <option value="calculation">计算题</option>
+                        <option value="true-false">判断题</option>
+                    </select>
+                </div>
+                <div class="search-group">
+                    <input type="text" id="questionSearch" placeholder="搜索题目..." onkeyup="searchQuestions()">
+                    <button class="btn-icon" onclick="searchQuestions()">🔍</button>
+                </div>
+            </div>
+            
+            <!-- Statistics Dashboard -->
+            <div class="bank-stats">
+                <div class="stat-card">
+                    <div class="stat-icon">📊</div>
+                    <div class="stat-info">
+                        <div class="stat-number">12,500</div>
+                        <div class="stat-label">题目总数</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">🎯</div>
+                    <div class="stat-info">
+                        <div class="stat-number">85%</div>
+                        <div class="stat-label">您的正确率</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">✅</div>
+                    <div class="stat-info">
+                        <div class="stat-number">342</div>
+                        <div class="stat-label">已完成</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">⭐</div>
+                    <div class="stat-info">
+                        <div class="stat-number">28</div>
+                        <div class="stat-label">连续天数</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Subject Categories -->
+            <div class="question-categories">
+                <div class="category-card" onclick="startSubjectQuiz('math')">
+                    <div class="category-header">
+                        <div class="category-icon">🧮</div>
+                        <div class="category-progress">
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 75%"></div>
+                            </div>
+                            <span class="progress-text">75%</span>
+                        </div>
+                    </div>
+                    <h3>数学</h3>
+                    <p>代数、微积分、统计学、几何</p>
+                    <div class="category-stats">
+                        <span class="stat">4,500 题目</span>
+                        <span class="stat">89% 正确率</span>
+                    </div>
+                    <button class="btn-primary">开始练习</button>
+                </div>
+                
+                <div class="category-card" onclick="startSubjectQuiz('english')">
+                    <div class="category-header">
+                        <div class="category-icon">📖</div>
+                        <div class="category-progress">
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 60%"></div>
+                            </div>
+                            <span class="progress-text">60%</span>
+                        </div>
+                    </div>
+                    <h3>英语</h3>
+                    <p>阅读理解、写作、语法</p>
+                    <div class="category-stats">
+                        <span class="stat">3,200 题目</span>
+                        <span class="stat">82% 正确率</span>
+                    </div>
+                    <button class="btn-primary">开始练习</button>
+                </div>
+                
+                <div class="category-card" onclick="startSubjectQuiz('science')">
+                    <div class="category-header">
+                        <div class="category-icon">🔬</div>
+                        <div class="category-progress">
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 45%"></div>
+                            </div>
+                            <span class="progress-text">45%</span>
+                        </div>
+                    </div>
+                    <h3>科学</h3>
+                    <p>物理、化学、生物</p>
+                    <div class="category-stats">
+                        <span class="stat">2,800 题目</span>
+                        <span class="stat">78% 正确率</span>
+                    </div>
+                    <button class="btn-primary">开始练习</button>
+                </div>
+                
+                <div class="category-card" onclick="startSubjectQuiz('history')">
+                    <div class="category-header">
+                        <div class="category-icon">📜</div>
+                        <div class="category-progress">
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 30%"></div>
+                            </div>
+                            <span class="progress-text">30%</span>
+                        </div>
+                    </div>
+                    <h3>历史</h3>
+                    <p>世界历史、古代文明</p>
+                    <div class="category-stats">
+                        <span class="stat">2,000 题目</span>
+                        <span class="stat">85% 正确率</span>
+                    </div>
+                    <button class="btn-primary">开始练习</button>
+                </div>
+            </div>
+            
+            <!-- Crawler Status -->
+            <div class="crawler-control-panel">
+                <div class="section-title">
+                    <h3>🕷️ 智能爬虫系统</h3>
+                    <p>自动从教育网站获取最新题目，保持题库内容更新</p>
+                </div>
+                <div id="crawlerStatus" class="crawler-status-container">
+                    <div class="crawler-status loading">
+                        <span class="status-indicator">⏳</span>
+                        <span>正在检查爬虫状态...</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Question Statistics Details -->
+            <div id="questionStatsDetails" class="question-stats-details">
+                <!-- Statistics will be populated by JavaScript -->
+            </div>
+
+            <!-- Search Results Info -->
+            <div class="search-results-info">
+                <span id="searchResults">显示所有题目</span>
+            </div>
+
+            <!-- Sample Questions -->
+            <div class="section-title">
+                <h3>📝 热门题目</h3>
+                <p>精选高质量题目，帮助您快速提升</p>
+            </div>
+            
+            <div class="recent-questions">
+                <div class="question-list" id="questionList">
+                    <div class="question-item question-card">
+                        <div class="question-header">
+                            <div class="question-title">微积分 - 求导数</div>
+                            <div class="difficulty-indicator easy">简单</div>
+                        </div>
+                        <div class="question-content">
+                            <p><strong>题目：</strong>求函数 f(x) = x² + 3x - 2 的导数</p>
+                            <p><strong>Question:</strong> What is the derivative of f(x) = x² + 3x - 2?</p>
+                        </div>
+                        <div class="question-details">
+                            <div class="detail-item">
+                                <span class="label">📚 学科:</span>
+                                <span class="value">数学</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="label">⏱️ 预计时间:</span>
+                                <span class="value">3-5分钟</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="label">🎯 知识点:</span>
+                                <span class="value">导数基本公式</span>
+                            </div>
+                        </div>
+                        <div class="question-meta">
+                            <span class="badge new">🟢 简单</span>
+                            <span class="badge free">选择题</span>
+                            <span class="stats">✅ 85% 正确率</span>
+                        </div>
+                        <div class="question-actions">
+                            <button class="btn-small" onclick="practiceQuestion(1)" title="开始练习这道题">🚀 开始练习</button>
+                            <button class="btn-small" onclick="viewSolution(1)" title="查看详细解答">💡 查看解答</button>
+                            <button class="btn-small" onclick="bookmarkQuestion(1)" title="收藏到我的题库">⭐ 收藏题目</button>
+                            <button class="btn-small" onclick="findSimilar(1)" title="查看相似题目">🔍 相似题目</button>
+                        </div>
+                    </div>
+                    
+                    <div class="question-item question-card">
+                        <div class="question-header">
+                            <div class="question-title">英语写作 - 议论文分析</div>
+                            <div class="difficulty-indicator medium">中等</div>
+                        </div>
+                        <div class="question-content">
+                            <p><strong>题目：</strong>分析莎士比亚《哈姆雷特》中的主要主题及其现代意义</p>
+                            <p><strong>Question:</strong> Analyze the themes in Shakespeare's Hamlet and discuss their relevance to modern society...</p>
+                        </div>
+                        <div class="question-details">
+                            <div class="detail-item">
+                                <span class="label">📚 学科:</span>
+                                <span class="value">英语文学</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="label">⏱️ 预计时间:</span>
+                                <span class="value">45-60分钟</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="label">🎯 技能:</span>
+                                <span class="value">文学分析，批判思维</span>
+                            </div>
+                        </div>
+                        <div class="question-meta">
+                            <span class="badge hot">🟡 中等</span>
+                            <span class="badge premium">论述题</span>
+                            <span class="stats">✅ 72% 正确率</span>
+                        </div>
+                        <div class="question-actions">
+                            <button class="btn-small" onclick="practiceQuestion(2)" title="开始写作练习">✍️ 开始写作</button>
+                            <button class="btn-small" onclick="viewExamples(2)" title="查看优秀范文">📖 查看范文</button>
+                            <button class="btn-small" onclick="bookmarkQuestion(2)" title="收藏到我的题库">⭐ 收藏题目</button>
+                            <button class="btn-small" onclick="getWritingTips(2)" title="获取写作指导">💭 写作指导</button>
+                        </div>
+                    </div>
+
+                    <div class="question-item question-card">
+                        <div class="question-header">
+                            <div class="question-title">物理 - 力学计算</div>
+                            <div class="difficulty-indicator hard">困难</div>
+                        </div>
+                        <div class="question-content">
+                            <p><strong>题目：</strong>一个质量为2kg的物体从高度10m处自由落下，计算落地时的速度和动能</p>
+                            <p><strong>Question:</strong> A 2kg object falls freely from a height of 10m. Calculate its velocity and kinetic energy upon impact.</p>
+                        </div>
+                        <div class="question-details">
+                            <div class="detail-item">
+                                <span class="label">📚 学科:</span>
+                                <span class="value">物理</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="label">⏱️ 预计时间:</span>
+                                <span class="value">8-12分钟</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="label">🎯 概念:</span>
+                                <span class="value">自由落体，能量守恒</span>
+                            </div>
+                        </div>
+                        <div class="question-meta">
+                            <span class="badge premium">🔴 困难</span>
+                            <span class="badge free">计算题</span>
+                            <span class="stats">✅ 58% 正确率</span>
+                        </div>
+                        <div class="question-actions">
+                            <button class="btn-small" onclick="practiceQuestion(3)" title="开始解题">🧮 开始计算</button>
+                            <button class="btn-small" onclick="viewSteps(3)" title="查看解题步骤">📊 解题步骤</button>
+                            <button class="btn-small" onclick="bookmarkQuestion(3)" title="收藏到我的题库">⭐ 收藏题目</button>
+                            <button class="btn-small" onclick="getFormulas(3)" title="查看公式提示">📐 公式提示</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Question Bank Tools -->
+            <div class="tools-section">
+                <div class="section-title">
+                    <h3>🛠️ 学习工具</h3>
+                    <p>智能化学习辅助工具，提升学习效率</p>
+                </div>
+                
+                <div class="tools-grid">
+                    <div class="tool-card">
+                        <div class="tool-icon">🎯</div>
+                        <h4>智能推荐</h4>
+                        <p>基于你的学习进度和薄弱环节，智能推荐最适合的练习题目</p>
+                        <button class="btn btn-primary btn-small" onclick="getRecommendations()" title="获取个性化题目推荐">获取推荐</button>
+                    </div>
+                    
+                    <div class="tool-card">
+                        <div class="tool-icon">📊</div>
+                        <h4>错题本</h4>
+                        <p>自动收集做错的题目，支持重复练习和知识点回顾</p>
+                        <button class="btn btn-primary btn-small" onclick="viewWrongQuestions()" title="查看和复习错题">查看错题</button>
+                    </div>
+                    
+                    <div class="tool-card">
+                        <div class="tool-icon">⏱️</div>
+                        <h4>计时练习</h4>
+                        <p>模拟考试环境，培养时间管理能力和答题节奏感</p>
+                        <button class="btn btn-primary btn-small" onclick="startTimedPractice()" title="开始计时练习模式">开始计时</button>
+                    </div>
+                    
+                    <div class="tool-card">
+                        <div class="tool-icon">🏆</div>
+                        <h4>成就系统</h4>
+                        <p>完成练习获得徽章和积分，激励持续学习的动力</p>
+                        <button class="btn btn-primary btn-small" onclick="viewAchievements()" title="查看学习成就和徽章">查看成就</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="strategyFeature" class="feature-content">
+            <button class="back-btn" onclick="hideFeature()">← 返回主页</button>
+            <div class="feature-header">
+                <h2>📊 申请策略</h2>
+                <p>科学的申请指导，帮您做出最佳选择</p>
+                <div class="header-actions">
+                    <button class="btn-secondary" onclick="generatePersonalizedStrategy()">📋 生成策略</button>
+                    <button class="btn-primary" onclick="exportStrategy()">📤 导出计划</button>
+                </div>
+            </div>
+            
+            <div class="strategy-tabs">
+                <button class="tab-btn active" onclick="showStrategyTab('timeline')">📅 时间线</button>
+                <button class="tab-btn" onclick="showStrategyTab('requirements')">📋 申请要求</button>
+                <button class="tab-btn" onclick="showStrategyTab('essays')">✍️ 文书写作</button>
+                <button class="tab-btn" onclick="showStrategyTab('schools')">🏫 目标院校</button>
+            </div>
+            
+            <div class="strategy-content">
+                <div id="timelineTab" class="tab-content active">
+                    <div class="timeline-container">
+                        <div class="timeline-item completed">
+                            <div class="timeline-date">2024年9月</div>
+                            <div class="timeline-content">
+                                <h4>✅ 调研阶段</h4>
+                                <p>调研大学和专业，制定初步院校清单</p>
+                                <div class="timeline-tasks">
+                                    <span class="task completed">✅ 大学调研</span>
+                                    <span class="task completed">✅ 专业对比</span>
+                                    <span class="task completed">✅ 初步院校清单</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="timeline-item current">
+                            <div class="timeline-date">2024年10月</div>
+                            <div class="timeline-content">
+                                <h4>🔄 申请准备</h4>
+                                <p>准备申请材料和标准化考试</p>
+                                <div class="timeline-tasks">
+                                    <span class="task completed">✅ SAT/ACT备考</span>
+                                    <span class="task in-progress">🔄 个人陈述草稿</span>
+                                    <span class="task pending">⏳ 推荐信</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="timeline-item pending">
+                            <div class="timeline-date">2024年11月</div>
+                            <div class="timeline-content">
+                                <h4>📝 申请提交</h4>
+                                <p>提交早申请/早决定申请</p>
+                                <div class="timeline-tasks">
+                                    <span class="task pending">⏳ 早申请</span>
+                                    <span class="task pending">⏳ 申请审核</span>
+                                    <span class="task pending">⏳ 最终提交</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="requirementsTab" class="tab-content">
+                    <div class="requirements-grid">
+                        <div class="requirement-card">
+                            <h4>📊 学术要求</h4>
+                            <ul class="requirement-list">
+                                <li class="completed">✅ GPA: 3.8+ (当前: 3.9)</li>
+                                <li class="completed">✅ SAT: 1450+ (当前: 1480)</li>
+                                <li class="pending">⏳ AP课程: 4+ (当前: 3)</li>
+                                <li class="pending">⏳ 学科测试 (如需要)</li>
+                            </ul>
+                        </div>
+                        <div class="requirement-card">
+                            <h4>📝 申请材料</h4>
+                            <ul class="requirement-list">
+                                <li class="in-progress">🔄 个人陈述 (草稿)</li>
+                                <li class="pending">⏳ 推荐信 (2/3)</li>
+                                <li class="completed">✅ 活动清单</li>
+                                <li class="pending">⏳ 补充文书</li>
+                            </ul>
+                        </div>
+                        <div class="requirement-card">
+                            <h4>🌟 课外活动</h4>
+                            <ul class="requirement-list">
+                                <li class="completed">✅ 领导角色</li>
+                                <li class="completed">✅ 社区服务 (150+ 小时)</li>
+                                <li class="in-progress">🔄 研究项目</li>
+                                <li class="pending">⏳ 实习/工作经验</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="essaysTab" class="tab-content">
+                    <div class="essays-list">
+                        <div class="essay-item">
+                            <div class="essay-header">
+                                <h4>个人陈述</h4>
+                                <span class="essay-status in-progress">进行中</span>
+                            </div>
+                            <p class="essay-prompt">"请告诉我们关于您自己以及您的独特之处..."</p>
+                            <div class="essay-actions">
+                                <button class="btn-small" onclick="editEssay('personal')">编辑草稿</button>
+                                <button class="btn-small" onclick="getEssayFeedback('personal')">获取反馈</button>
+                            </div>
+                        </div>
+                        <div class="essay-item">
+                            <div class="essay-header">
+                                <h4>专业选择理由</h4>
+                                <span class="essay-status pending">未开始</span>
+                            </div>
+                            <p class="essay-prompt">"为什么您对所选择的专业领域感兴趣？"</p>
+                            <div class="essay-actions">
+                                <button class="btn-small" onclick="startEssay('major')">开始写作</button>
+                                <button class="btn-small" onclick="getEssayTips('major')">获取建议</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="schoolsTab" class="tab-content">
+                    <div class="schools-grid">
+                        <div class="school-card reach">
+                            <div class="school-header">
+                                <h4>哈佛大学</h4>
+                                <span class="school-type">冲刺</span>
+                            </div>
+                            <div class="school-stats">
+                                <span class="stat">录取率: 3.4%</span>
+                                <span class="stat">匹配度: 65%</span>
+                            </div>
+                            <div class="school-deadlines">
+                                <span class="deadline">EA: 11月1日</span>
+                                <span class="deadline">RD: 1月1日</span>
+                            </div>
+                        </div>
+                        <div class="school-card target">
+                            <div class="school-header">
+                                <h4>密歇根大学</h4>
+                                <span class="school-type">目标</span>
+                            </div>
+                            <div class="school-stats">
+                                <span class="stat">录取率: 23%</span>
+                                <span class="stat">匹配度: 78%</span>
+                            </div>
+                            <div class="school-deadlines">
+                                <span class="deadline">EA: 11月1日</span>
+                                <span class="deadline">RD: 2月1日</span>
+                            </div>
+                        </div>
+                        <div class="school-card safety">
+                            <div class="school-header">
+                                <h4>州立大学</h4>
+                                <span class="school-type">保底</span>
+                            </div>
+                            <div class="school-stats">
+                                <span class="stat">录取率: 65%</span>
+                                <span class="stat">匹配度: 92%</span>
+                            </div>
+                            <div class="school-deadlines">
+                                <span class="deadline">优先: 12月1日</span>
+                                <span class="deadline">常规: 3月1日</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="resourceFeature" class="feature-content">
+            <button class="back-btn" onclick="hideFeature()">← 返回主页</button>
+            <div class="feature-header">
+                <h2>📖 学习资源</h2>
+                <p>丰富的学习材料和指导资源，支持您的学习成长</p>
+            </div>
+            <div class="feature-grid">
+                <div class="feature-item">
+                    <h3>📚 教材资料</h3>
+                    <p>各学科教材、辅导资料、重点难点解析</p>
+                </div>
+                <div class="feature-item">
+                    <h3>🎥 视频课程</h3>
+                    <p>名师讲解视频、知识点分析、解题技巧分享</p>
+                </div>
+                <div class="feature-item">
+                    <h3>📝 学习笔记</h3>
+                    <p>优秀学生学习笔记、重点总结、复习大纲</p>
+                </div>
+                <div class="feature-item">
+                    <h3>🔍 学习工具</h3>
+                    <p>学习计划制定工具、时间管理工具、学习效果评估工具</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="communityFeature" class="feature-content">
+            <button class="back-btn" onclick="hideFeature()">← 返回主页</button>
+            <div class="feature-header">
+                <h2>👥 学习社区</h2>
+                <p>与志同道合的学习伙伴交流分享，共同进步成长</p>
+            </div>
+            <div class="feature-grid">
+                <div class="feature-item">
+                    <h3>💬 学习讨论</h3>
+                    <p>学习论坛中讨论问题、分享心得、互帮互助</p>
+                </div>
+                <div class="feature-item">
+                    <h3>👥 学习小组</h3>
+                    <p>组建或加入学习小组，与同学共同制定学习计划</p>
+                </div>
+                <div class="feature-item">
+                    <h3>🏆 学习竞赛</h3>
+                    <p>参与各种学习竞赛和挑战，检验学习成果</p>
+                </div>
+                <div class="feature-item">
+                    <h3>📢 经验分享</h3>
+                    <p>分享学习经验、备考心得、成功案例</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="announcementFeature" class="feature-content">
+            <button class="back-btn" onclick="hideFeature()">← 返回主页</button>
+            <div class="feature-header">
+                <h2>📢 院校公告</h2>
+                <p>及时了解各大院校招生政策和考试安排的重要信息</p>
+            </div>
+            <div class="feature-grid">
+                <div class="feature-item">
+                    <h3>📅 招生政策</h3>
+                    <p>各大学最新招生政策、专业设置变化、录取要求调整等重要信息</p>
+                </div>
+                <div class="feature-item">
+                    <h3>📝 考试安排</h3>
+                    <p>高考、自主招生、艺术类考试等重要考试的时间安排和注意事项</p>
+                </div>
+                <div class="feature-item">
+                    <h3>🎯 录取信息</h3>
+                    <p>各批次录取分数线、录取结果查询、补录信息等录取相关资讯</p>
+                </div>
+                <div class="feature-item">
+                    <h3>📋 政策解读</h3>
+                    <p>重要政策的详细解读和分析，帮助您理解政策要点和影响</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="aboutFeature" class="feature-content">
+            <button class="back-btn" onclick="hideFeature()">← 返回主页</button>
+            <div class="feature-header">
+                <h2>ℹ️ 关于本站</h2>
+                <p>了解Smart College Advisor的使命、愿景和核心价值</p>
+            </div>
+            <div class="feature-grid">
+                <div class="feature-item">
+                    <h3>🎯 使命愿景</h3>
+                    <p>致力于为每一位学生提供科学、准确、个性化的升学指导，助力实现大学梦想</p>
+                </div>
+                <div class="feature-item">
+                    <h3>🤖 技术优势</h3>
+                    <p>运用先进的AI技术和数据分析，为学生提供科学客观的升学建议和规划指导</p>
+                </div>
+                <div class="feature-item">
+                    <h3>👨‍🏫 专业团队</h3>
+                    <p>由教育专家、AI工程师、数据分析师组成的专业团队，确保服务质量</p>
+                </div>
+                <div class="feature-item">
+                    <h3>💡 创新理念</h3>
+                    <p>不断创新服务模式，结合最新的教育理念和技术发展，为学生提供更好的服务体验</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Application Scripts -->
+    <script src="enhanced-app.js"></script>
+</body>
+</html>

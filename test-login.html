@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Firebase 登录测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: white;
+        }
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            margin: 10px 0;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .btn-google {
+            background: white;
+            color: #1e40af;
+            font-weight: 600;
+        }
+        .btn-google:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        .btn-test {
+            background: #10b981;
+            color: white;
+            font-weight: 600;
+        }
+        .btn-test:hover {
+            background: #059669;
+        }
+        .status {
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+        }
+        .error {
+            background: rgba(239, 68, 68, 0.2);
+            border-left: 4px solid #ef4444;
+        }
+        .success {
+            background: rgba(16, 185, 129, 0.2);
+            border-left: 4px solid #10b981;
+        }
+        .info {
+            background: rgba(59, 130, 246, 0.2);
+            border-left: 4px solid #3b82f6;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Firebase 登录测试页面</h1>
+        <p>用于测试和诊断Firebase Google登录问题</p>
+        
+        <div id="status" class="status info">
+            📋 正在初始化Firebase服务...
+        </div>
+        
+        <button class="btn btn-test" onclick="testFirebaseStatus()">
+            🔍 检查Firebase状态
+        </button>
+        
+        <button class="btn btn-google" onclick="testGoogleLogin()">
+            🌐 测试Google登录
+        </button>
+        
+        <button class="btn btn-test" onclick="testCSPStatus()">
+            🛡️ 检查CSP状态
+        </button>
+        
+        <div id="user-info" style="display: none;">
+            <h3>👤 用户信息</h3>
+            <p id="user-details"></p>
+        </div>
+        
+        <div id="console-output">
+            <h3>📋 控制台输出</h3>
+            <div id="console-log" style="background: rgba(0, 0, 0, 0.3); padding: 15px; border-radius: 8px; font-family: monospace; font-size: 12px; max-height: 300px; overflow-y: auto;"></div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    
+    <script>
+        // Firebase配置
+        const firebaseConfig = {
+            apiKey: "AIzaSyBPeOp2JxbcLyFOdTlaPVaLcHs3c-UlDlU",
+            authDomain: "test-base-a7c4b.firebaseapp.com",
+            projectId: "test-base-a7c4b",
+            storageBucket: "test-base-a7c4b.firebasestorage.app",
+            messagingSenderId: "693148597675",
+            appId: "1:693148597675:web:b2f8572531db152d7866ee",
+            measurementId: "G-T65DZD1826"
+        };
+        
+        // 日志收集
+        let consoleLog = [];
+        const originalLog = console.log;
+        const originalError = console.error;
+        const originalWarn = console.warn;
+        
+        console.log = function(...args) {
+            consoleLog.push(['LOG', new Date().toLocaleTimeString(), ...args]);
+            updateConsoleDisplay();
+            originalLog.apply(console, args);
+        };
+        
+        console.error = function(...args) {
+            consoleLog.push(['ERROR', new Date().toLocaleTimeString(), ...args]);
+            updateConsoleDisplay();
+            originalError.apply(console, args);
+        };
+        
+        console.warn = function(...args) {
+            consoleLog.push(['WARN', new Date().toLocaleTimeString(), ...args]);
+            updateConsoleDisplay();
+            originalWarn.apply(console, args);
+        };
+        
+        function updateConsoleDisplay() {
+            const consoleElement = document.getElementById('console-log');
+            if (consoleElement) {
+                consoleElement.innerHTML = consoleLog.slice(-20).map(entry => 
+                    `<div style="margin: 2px 0; color: ${entry[0] === 'ERROR' ? '#ff6b6b' : entry[0] === 'WARN' ? '#ffa726' : '#81c784'}">
+                        [${entry[0]}] ${entry[1]} - ${entry.slice(2).join(' ')}
+                    </div>`
+                ).join('');
+                consoleElement.scrollTop = consoleElement.scrollHeight;
+            }
+        }
+        
+        function updateStatus(message, type = 'info') {
+            const statusElement = document.getElementById('status');
+            statusElement.className = `status ${type}`;
+            statusElement.innerHTML = message;
+        }
+        
+        // 测试Firebase状态
+        async function testFirebaseStatus() {
+            updateStatus('🔍 检查Firebase状态...', 'info');
+            
+            try {
+                // 检查Firebase SDK
+                if (typeof firebase === 'undefined') {
+                    throw new Error('Firebase SDK未加载');
+                }
+                
+                // 初始化Firebase
+                if (firebase.apps.length === 0) {
+                    firebase.initializeApp(firebaseConfig);
+                    console.log('Firebase应用已初始化');
+                }
+                
+                // 检查各个服务
+                const services = {
+                    'Auth': !!firebase.auth,
+                    'Firestore': !!firebase.firestore,
+                    'Storage': !!firebase.storage
+                };
+                
+                console.log('Firebase服务状态:', services);
+                
+                let statusMessage = '✅ Firebase状态检查完成:<br>';
+                Object.entries(services).forEach(([service, available]) => {
+                    statusMessage += `• ${service}: ${available ? '✅ 可用' : '❌ 不可用'}<br>`;
+                });
+                
+                updateStatus(statusMessage, 'success');
+                
+            } catch (error) {
+                console.error('Firebase状态检查失败:', error);
+                updateStatus(`❌ Firebase检查失败: ${error.message}`, 'error');
+            }
+        }
+        
+        // 测试Google登录
+        async function testGoogleLogin() {
+            updateStatus('🔐 测试Google登录...', 'info');
+            
+            try {
+                if (!firebase.auth) {
+                    throw new Error('Firebase Auth不可用');
+                }
+                
+                const provider = new firebase.auth.GoogleAuthProvider();
+                provider.setCustomParameters({
+                    prompt: 'select_account'
+                });
+                
+                console.log('正在打开Google登录弹窗...');
+                const result = await firebase.auth().signInWithPopup(provider);
+                const user = result.user;
+                
+                console.log('Google登录成功:', user);
+                
+                // 显示用户信息
+                document.getElementById('user-info').style.display = 'block';
+                document.getElementById('user-details').innerHTML = `
+                    📧 邮箱: ${user.email}<br>
+                    👤 姓名: ${user.displayName}<br>
+                    🆔 UID: ${user.uid}<br>
+                    ✅ 邮箱验证: ${user.emailVerified ? '是' : '否'}
+                `;
+                
+                updateStatus('✅ Google登录测试成功！', 'success');
+                
+            } catch (error) {
+                console.error('Google登录测试失败:', error);
+                updateStatus(`❌ Google登录失败: ${error.message}`, 'error');
+            }
+        }
+        
+        // 测试CSP状态
+        function testCSPStatus() {
+            updateStatus('🛡️ 检查CSP状态...', 'info');
+            
+            try {
+                // 尝试加载Google APIs
+                const script = document.createElement('script');
+                script.src = 'https://apis.google.com/js/api.js';
+                script.onload = () => {
+                    console.log('Google APIs加载成功');
+                    updateStatus('✅ CSP配置正确，Google APIs可以正常加载', 'success');
+                };
+                script.onerror = (error) => {
+                    console.error('Google APIs加载失败:', error);
+                    updateStatus('❌ CSP阻止了Google APIs加载，需要调整安全策略', 'error');
+                };
+                
+                document.head.appendChild(script);
+                
+            } catch (error) {
+                console.error('CSP测试失败:', error);
+                updateStatus(`❌ CSP测试失败: ${error.message}`, 'error');
+            }
+        }
+        
+        // 页面加载完成后自动检查状态
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('测试页面已加载');
+            setTimeout(testFirebaseStatus, 1000);
+        });
+    </script>
+</body>
+</html>

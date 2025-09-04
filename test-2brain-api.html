@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2brain API 测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        .test-area {
+            margin: 20px 0;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 4px solid #007bff;
+        }
+        .btn {
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+        .result {
+            margin: 15px 0;
+            padding: 15px;
+            border-radius: 8px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 14px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+        .stream-output {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            color: #495057;
+            min-height: 100px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 2brain API 连接测试</h1>
+        <p>测试与2brain API的连接和流式对话功能</p>
+        
+        <div class="test-area">
+            <h3>🔧 API配置</h3>
+            <p><strong>API端点:</strong> https://portal.2brain.ai/api/bot/chat/v1/chat/completions</p>
+            <p><strong>API密钥:</strong> 2B-H2t9t16XwDlzNuBx5ymWzJJKUqwpC7ud4pphtiUqZy63idXDIg</p>
+            
+            <button class="btn btn-primary" onclick="testAPIConnection()">🔍 测试API连接</button>
+            <button class="btn btn-success" onclick="testStreamChat()">⚡ 测试流式对话</button>
+            
+            <div id="connectionResult"></div>
+        </div>
+        
+        <div class="test-area">
+            <h3>💬 流式对话测试</h3>
+            <input type="text" id="testMessage" placeholder="输入测试消息..." style="width: 70%; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+            <button class="btn btn-primary" onclick="sendTestMessage()">发送</button>
+            
+            <div id="streamResult" class="result stream-output">
+                等待消息...
+            </div>
+        </div>
+        
+        <div class="test-area">
+            <h3>📊 详细日志</h3>
+            <div id="detailLog" class="result info">
+                等待操作...
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'https://portal.2brain.ai/api/bot/chat/v1/chat/completions';
+        const API_KEY = '2B-H2t9t16XwDlzNuBx5ymWzJJKUqwpC7ud4pphtiUqZy63idXDIg';
+        
+        let logContent = '';
+        
+        function log(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            logContent += `[${timestamp}] ${message}\n`;
+            document.getElementById('detailLog').textContent = logContent;
+            console.log(message);
+        }
+        
+        // 测试API连接 - 按照Python示例格式
+        async function testAPIConnection() {
+            const resultDiv = document.getElementById('connectionResult');
+            resultDiv.innerHTML = '<div class="result info">正在测试2brain API连接...</div>';
+            
+            log('🔍 开始测试2brain API连接...');
+            
+            try {
+                // 完全按照Python示例的请求格式
+                const testPayload = {
+                    messages: [{ role: "user", content: "Hello" }],
+                    stream: false
+                };
+                
+                log('📤 发送2brain API测试请求 (Python格式): ' + JSON.stringify(testPayload, null, 2));
+                
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${API_KEY}`
+                    },
+                    body: JSON.stringify(testPayload)
+                });
+                
+                log(`📡 2brain API响应状态: ${response.status} ${response.statusText}`);
+                
+                // 按照Python示例检查status_code == 200
+                if (response.status === 200) {
+                    const data = await response.json();
+                    log('✅ 2brain API连接成功!');
+                    log('响应数据: ' + JSON.stringify(data, null, 2));
+                    
+                    resultDiv.innerHTML = `
+                        <div class="result success">
+                            ✅ 2brain API连接成功！<br>
+                            响应状态: ${response.status}<br>
+                            消息内容: ${data.choices?.[0]?.message?.content || '无内容'}<br>
+                            模型: ${data.model || '未知'}<br>
+                            用量: ${JSON.stringify(data.usage || {})}
+                        </div>
+                    `;
+                } else {
+                    // 对应Python的else分支
+                    const errorData = await response.json().catch(() => response.text());
+                    log(`❌ 2brain API错误响应: ${response.status} - ${JSON.stringify(errorData)}`);
+                    
+                    resultDiv.innerHTML = `
+                        <div class="result error">
+                            ❌ 2brain API连接失败<br>
+                            状态码: ${response.status}<br>
+                            错误信息: ${JSON.stringify(errorData, null, 2)}
+                        </div>
+                    `;
+                }
+                
+            } catch (error) {
+                log(`❌ 2brain API连接异常: ${error.message}`);
+                
+                resultDiv.innerHTML = `
+                    <div class="result error">
+                        ❌ 连接异常<br>
+                        错误: ${error.message}
+                    </div>
+                `;
+            }
+        }
+        
+        // 测试流式对话
+        async function testStreamChat() {
+            const message = "请简单介绍一下人工智能的发展历史";
+            await sendStreamMessage(message);
+        }
+        
+        // 发送测试消息
+        async function sendTestMessage() {
+            const input = document.getElementById('testMessage');
+            const message = input.value.trim();
+            
+            if (!message) {
+                alert('请输入测试消息');
+                return;
+            }
+            
+            await sendStreamMessage(message);
+            input.value = '';
+        }
+        
+        // 发送流式消息 - 完全按照Python示例实现
+        async function sendStreamMessage(message) {
+            const resultDiv = document.getElementById('streamResult');
+            resultDiv.textContent = '';
+            
+            log(`🚀 开始2brain流式对话测试: "${message}"`);
+            
+            try {
+                // 完全按照Python示例的请求格式
+                const payload = {
+                    messages: [{ role: "user", content: message }],
+                    stream: true  // 对应Python的stream: True
+                };
+                
+                log('📤 发送2brain流式请求 (Python格式): ' + JSON.stringify(payload, null, 2));
+                
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${API_KEY}`
+                    },
+                    body: JSON.stringify(payload)
+                });
+                
+                log(`📡 2brain流式响应状态: ${response.status} ${response.statusText}`);
+                
+                // 对应Python的if response.status_code == 200:
+                if (response.status === 200) {
+                    log('✅ 2brain API响应200，开始处理流式数据...');
+                    
+                    // 对应Python的for chunk in response.iter_lines(decode_unicode=True):
+                    const reader = response.body.getReader();
+                    const decoder = new TextDecoder('utf-8');  // 对应response.encoding = 'utf-8'
+                    let fullResponse = '';
+                    let chunkCount = 0;
+                    
+                    resultDiv.textContent = '🤖 2brain AI正在回复...\n\n';
+                    
+                    while (true) {
+                        const { done, value } = await reader.read();
+                        
+                        if (done) {
+                            log(`✅ 2brain流式响应完成，共收到 ${chunkCount} 个数据块`);
+                            break;
+                        }
+                        
+                        const chunk = decoder.decode(value, { stream: true });
+                        const lines = chunk.split('\n');
+                        
+                        for (const line of lines) {
+                            // 对应Python的if chunk:
+                            if (line.trim() === '') continue;
+                            
+                            log(`📡 收到2brain数据行: ${line.substring(0, 150)}${line.length > 150 ? '...' : ''}`);
+                            
+                            try {
+                                // 直接解析JSON，对应Python的chunk.json()
+                                const parsed = JSON.parse(line);
+                                
+                                // 对应Python的.get("choices")[0].get("delta").get("content")
+                                const content = parsed.choices?.[0]?.delta?.content;
+                                
+                                if (content) {
+                                    fullResponse += content;
+                                    chunkCount++;
+                                    
+                                    log(`📝 提取内容: "${content}"`);
+                                    
+                                    // 实时更新显示
+                                    resultDiv.textContent = '🤖 2brain AI回复:\n\n' + fullResponse + '█';
+                                    resultDiv.scrollTop = resultDiv.scrollHeight;
+                                }
+                                
+                            } catch (parseError) {
+                                // 可能是SSE格式，尝试处理data:前缀
+                                if (line.startsWith('data: ')) {
+                                    const data = line.slice(6).trim();
+                                    
+                                    if (data === '[DONE]') {
+                                        log('📡 收到2brain结束标志');
+                                        break;
+                                    }
+                                    
+                                    try {
+                                        const parsed = JSON.parse(data);
+                                        const content = parsed.choices?.[0]?.delta?.content;
+                                        
+                                        if (content) {
+                                            fullResponse += content;
+                                            chunkCount++;
+                                            
+                                            resultDiv.textContent = '🤖 2brain AI回复:\n\n' + fullResponse + '█';
+                                            resultDiv.scrollTop = resultDiv.scrollHeight;
+                                        }
+                                    } catch (sseError) {
+                                        log(`⚠️ SSE格式解析失败: ${data.substring(0, 100)}`);
+                                    }
+                                } else {
+                                    log(`⚠️ 无法解析数据格式: ${line.substring(0, 100)}`);
+                                }
+                            }
+                        }
+                    }
+                    
+                    // 移除光标，显示最终结果
+                    resultDiv.textContent = '🤖 2brain AI回复:\n\n' + fullResponse;
+                    log(`✅ 2brain流式对话完成！最终回复长度: ${fullResponse.length}`);
+                    
+                } else {
+                    // 对应Python的else: print(response.status_code, response.json())
+                    const errorData = await response.json().catch(() => response.text());
+                    log(`❌ 2brain API错误: ${response.status} - ${JSON.stringify(errorData)}`);
+                    
+                    resultDiv.innerHTML = `
+                        <div style="color: red;">
+                            ❌ 2brain API错误<br>
+                            状态码: ${response.status}<br>
+                            错误信息: ${JSON.stringify(errorData, null, 2)}
+                        </div>
+                    `;
+                }
+                
+            } catch (error) {
+                log(`❌ 2brain流式对话异常: ${error.message}`);
+                
+                resultDiv.innerHTML = `
+                    <div style="color: red;">
+                        ❌ 流式对话异常<br>
+                        错误: ${error.message}
+                    </div>
+                `;
+            }
+        }
+        
+        // 页面加载时自动测试连接
+        window.addEventListener('load', function() {
+            log('🚀 页面加载完成，开始初始化测试');
+            setTimeout(testAPIConnection, 1000);
+        });
+    </script>
+</body>
+</html>
