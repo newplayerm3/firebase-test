@@ -9,7 +9,7 @@
 
 # 安全重定向
 # 强制 HTTPS
-http://your-domain.com/*  https://your-domain.com/:splat  301!
+http://smartcollege810429.netlify.app/*  https://smartcollege810429.netlify.app/:splat  301!
 
 # 404 页面（可选）
 # /404  /404.html  404
